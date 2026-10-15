@@ -12,7 +12,6 @@
       content="Nes Henna, hennaya : henné naturel pour mariages, fêtes et envies du quotidien. Découvrez les réalisations, les tarifs et réservez votre créneau en ligne."
     />
     <meta name="theme-color" content="#D73463" />
-    <!-- La galerie réservée aux femmes ne doit pas être indexée -->
     <meta name="robots" content="index, follow" />
     <link rel="icon" href="assets/favicon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -23,30 +22,7 @@
     />
     <link rel="stylesheet" href="style.css" />
   </head>
-  <body class="locked">
-    <!-- ================= ÉCRAN D'ENTRÉE (accès réservé aux femmes) ================= -->
-    <div
-      id="gate"
-      class="gate"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="gate-title"
-    >
-      <div class="gate-card">
-        <img src="assets/logo.png" alt="Logo Nes Henna" class="gate-logo" />
-        <h1 id="gate-title">Bienvenue chez Nes Henna</h1>
-        <p>
-          Pour respecter l'intimité des clientes, les photos de réalisations
-          sont réservées aux femmes.
-        </p>
-        <button class="btn btn-primary btn-lg" id="gate-yes">
-          Je suis une femme, j'entre ✨
-        </button>
-        <button class="btn-link" id="gate-no">Je ne suis pas une femme</button>
-        <p class="gate-note">Votre choix est mémorisé sur cet appareil.</p>
-      </div>
-    </div>
-
+  <body>
     <!-- ================= EN-TÊTE ================= -->
     <header class="topbar" id="topbar">
       <a href="#accueil" class="brand" aria-label="Nes Henna – accueil">

@@ -4,20 +4,6 @@
    ===================================================================== */
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
-const store = {
-  get(k) {
-    try {
-      return localStorage.getItem(k);
-    } catch {
-      return null;
-    }
-  },
-  set(k, v) {
-    try {
-      localStorage.setItem(k, v);
-    } catch {}
-  },
-};
 let chosenModel = null;
 let selectedLevel = "simple";
 let selectedDate = null,
@@ -69,27 +55,7 @@ observeReveals();
 // filet de sécurité : si l'observateur ne se déclenche pas, tout devient visible
 setTimeout(() => $$(".reveal").forEach((el) => el.classList.add("in")), 2500);
 
-/* ---------- Écran d'entrée : photos chargées seulement après confirmation ---------- */
-const gate = $("#gate");
-function unlock() {
-  gate.hidden = true;
-  document.body.classList.remove("locked");
-  initializeGallery();
-}
-if (store.get("nh-femme") === "1") unlock();
-$("#gate-yes").addEventListener("click", () => {
-  store.set("nh-femme", "1");
-  unlock();
-});
-$("#gate-no").addEventListener("click", () => {
-  $(".gate-card").innerHTML =
-    `<img src="assets/logo.png" alt="Nes Henna" class="gate-logo">
-    <h1>Merci de votre visite</h1>
-    <p>Les réalisations sont réservées aux femmes afin de préserver l'intimité des clientes. Vous pouvez néanmoins nous écrire sur WhatsApp.</p>
-    <a class="btn btn-primary btn-lg" href="${waLink("Bonjour Nes Henna 👋")}" target="_blank" rel="noopener">💬 Écrire sur WhatsApp</a>`;
-});
-
-/* ---------- Galerie (images injectées après confirmation) ---------- */
+/* ---------- Galerie ---------- */
 function initializeGallery() {
   // grille
   const g = $("#gallery");
@@ -250,6 +216,8 @@ function initializeReviewsMarquee() {
 }
 
 initializeReviewsMarquee();
+
+initializeGallery();
 
 /* ---------- Calendrier de démonstration ---------- */
 const JOURS = ["dim", "lun", "mar", "mer", "jeu", "ven", "sam"];
