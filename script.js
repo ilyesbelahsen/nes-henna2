@@ -4,7 +4,7 @@
    ===================================================================== */
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
-let chosenModel = null;
+let chosenModels = [];
 let selectedLevel = "simple";
 let selectedDate = null,
   selectedSlot = null;
@@ -123,11 +123,36 @@ $(".lb-close").addEventListener("click", () => ($("#lightbox").hidden = true));
 $("#lightbox").addEventListener("click", (e) => {
   if (e.target.id === "lightbox") e.currentTarget.hidden = true;
 });
+function renderChosenModels() {
+  const chosen = $("#chosen-model");
+  const list = $("#chosen-list");
+  list.replaceChildren();
+  chosen.hidden = chosenModels.length === 0;
+  chosenModels.forEach((model, index) => {
+    const item = document.createElement("div");
+    item.className = "chosen-item";
+    const image = document.createElement("img");
+    image.src = model.src;
+    image.alt = model.alt;
+    const name = document.createElement("span");
+    name.textContent = model.alt;
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "remove-model";
+    remove.textContent = "Supprimer";
+    remove.addEventListener("click", () => {
+      chosenModels.splice(index, 1);
+      renderChosenModels();
+    });
+    item.append(image, name, remove);
+    list.append(item);
+  });
+}
 $("#lb-choose").addEventListener("click", () => {
-  chosenModel = lbPhoto;
-  const c = $("#chosen-model");
-  c.hidden = false;
-  c.innerHTML = `<img src="${lbPhoto.src}" alt=""> <span>Modèle choisi dans la galerie ✓</span>`;
+  if (!lbPhoto) return;
+  if (!chosenModels.some((model) => model.src === lbPhoto.src))
+    chosenModels.push(lbPhoto);
+  renderChosenModels();
   selectedLevel = lbPhoto.niveau;
   $("#lightbox").hidden = true;
   $("#reserver").scrollIntoView({ behavior: "smooth" });
@@ -228,7 +253,29 @@ function isTaken(d, h) {
 }
 const daysEl = $("#days"),
   slotsEl = $("#slots"),
-  placeEl = $("#place-info");
+  placeEl = $("#place-info"),
+  villeEl = $("#ville"),
+  villesEl = $("#villes");
+
+SITE_CONFIG.villes.forEach((ville) => {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "city";
+  button.textContent = ville;
+  button.setAttribute("role", "option");
+  button.addEventListener("click", () => {
+    $$(".city").forEach((item) => {
+      item.classList.remove("sel");
+      item.setAttribute("aria-selected", "false");
+    });
+    button.classList.add("sel");
+    button.setAttribute("aria-selected", "true");
+    villeEl.value = ville;
+    placeEl.textContent = `📍 ${ville} – choisissez un jour`;
+    buildDays(ville);
+  });
+  villesEl.append(button);
+});
 
 function renderSlots(date, lieu) {
   slotsEl.innerHTML = "";
@@ -257,17 +304,22 @@ function selectDay(button, date, lieu) {
   button.classList.add("sel");
   selectedDate = { date, lieu };
   selectedSlot = null;
+  slotsEl.hidden = false;
   placeEl.textContent = `📍 ${lieu} – choisissez un horaire`;
   renderSlots(date, lieu);
 }
 
-function buildDays() {
+function buildDays(lieu) {
+  daysEl.innerHTML = "";
+  slotsEl.innerHTML = "";
+  slotsEl.hidden = true;
+  daysEl.hidden = false;
+  selectedDate = null;
+  selectedSlot = null;
   const today = new Date();
   for (let i = 1; i <= SITE_CONFIG.joursAffiches; i++) {
     const d = new Date(today);
     d.setDate(today.getDate() + i);
-    const lieu = SITE_CONFIG.lieux[d.getDay()];
-    if (!lieu) continue;
     const b = document.createElement("button");
     b.type = "button";
     b.className = "day";
@@ -278,14 +330,87 @@ function buildDays() {
   }
 }
 
-buildDays();
+/* Photos des modèles */
+const photoFields = $("#photo-fields");
+let photoCount = 1;
 
-/* Nom de la photo envoyée */
-$("#photo").addEventListener("change", (e) => {
-  const f = e.target.files[0];
-  $("#photo-name").textContent = f
-    ? `✓ ${f.name} (pensez à l'envoyer aussi sur WhatsApp)`
-    : "Vous pourrez aussi l'envoyer directement sur WhatsApp.";
+function updateUploadedModels() {
+  const models = [...photoFields.querySelectorAll(".photo-row")].flatMap(
+    (row) => {
+      const input = row.querySelector('input[type="file"]');
+      const zone = row.querySelector('select[name="zone"]');
+      return [...input.files].map((file) => ({ file, zone: zone.value }));
+    },
+  );
+  const uploadedModels = $("#uploaded-models");
+  const uploadedList = $("#uploaded-list");
+  uploadedList.replaceChildren();
+  uploadedModels.hidden = models.length === 0;
+  models.forEach(({ file, zone }) => {
+    const item = document.createElement("div");
+    item.className = "uploaded-item";
+    const image = document.createElement("img");
+    image.src = URL.createObjectURL(file);
+    image.alt = `Modèle importé : ${file.name}`;
+    const details = document.createElement("div");
+    details.className = "model-details";
+    const name = document.createElement("span");
+    name.className = "model-name";
+    name.textContent = file.name;
+    const bodyPart = document.createElement("small");
+    bodyPart.className = "model-zone";
+    bodyPart.textContent = `Partie : ${zone}`;
+    details.append(name, bodyPart);
+    item.append(image, details);
+    uploadedList.append(item);
+  });
+}
+
+photoFields.addEventListener("change", updateUploadedModels);
+photoFields.addEventListener("click", (e) => {
+  const removeButton = e.target.closest(".remove-photo");
+  if (!removeButton) return;
+  e.preventDefault();
+  removeButton.closest(".photo-row").remove();
+  updateUploadedModels();
+});
+$("#add-photo").addEventListener("click", () => {
+  photoCount += 1;
+  const row = document.createElement("div");
+  row.className = "photo-row";
+  const label = document.createElement("label");
+  label.className = "field";
+  label.append(`Photo du modèle ${photoCount}`);
+
+  const input = document.createElement("input");
+  input.name = "photo";
+  input.type = "file";
+  input.accept = "image/*,.heic,.heif";
+  label.append(input);
+  const zoneLabel = document.createElement("label");
+  zoneLabel.className = "field";
+  zoneLabel.append("Partie du corps");
+  const zone = document.createElement("select");
+  zone.name = "zone";
+  [
+    "Main (dos)",
+    "Paume",
+    "Les deux mains",
+    "Avant-bras",
+    "Pied",
+    "Autre",
+  ].forEach((value) => {
+    const option = document.createElement("option");
+    option.textContent = value;
+    zone.append(option);
+  });
+  zoneLabel.append(zone);
+  const removeButton = document.createElement("button");
+  removeButton.type = "button";
+  removeButton.className = "remove-photo";
+  removeButton.textContent = "Supprimer";
+  row.append(label, zoneLabel, removeButton);
+  photoFields.append(row);
 });
 
 /* ---------- Formulaire → WhatsApp + page de confirmation ---------- */
@@ -295,6 +420,7 @@ $("#booking").addEventListener("submit", (e) => {
     err = $("#form-error");
   const v = (n) => f.elements[n].value.trim();
   const problems = [];
+  if (!v("ville")) problems.push("une ville");
   if (!v("prenom") || !v("nom")) problems.push("votre prénom et votre nom");
   if (!/^[+\d][\d\s.()-]{7,}$/.test(v("whatsapp")))
     problems.push("un numéro WhatsApp valide");
@@ -312,15 +438,18 @@ $("#booking").addEventListener("submit", (e) => {
   const niveau = selectedLevel;
   const d = selectedDate.date;
   const dateTxt = `${JOURS[d.getDay()]} ${d.getDate()} ${MOIS[d.getMonth()]} ${d.getFullYear()} à ${selectedSlot}`;
+  const zones = [...photoFields.querySelectorAll('select[name="zone"]')].map(
+    (select) => select.value,
+  );
   const msg = [
     "Bonjour Nes Henna 👋 Je souhaite réserver un rendez-vous :",
     `• Nom : ${v("prenom")} ${v("nom")}`,
     `• Créneau : ${dateTxt}`,
     `• Lieu : ${selectedDate.lieu}`,
     `• Niveau : ${LEVEL_LABELS[niveau] || niveau} (à partir de ${SITE_CONFIG.prix[niveau]} €)`,
-    `• Partie du corps : ${f.elements.zone.value}`,
-    chosenModel
-      ? `• Modèle choisi dans la galerie : ${chosenModel.alt}`
+    `• Parties du corps : ${zones.join(", ")}`,
+    chosenModels.length
+      ? `• Modèles choisis dans la galerie : ${chosenModels.map((model) => model.alt).join(" | ")}`
       : "• Je vous envoie mon modèle en photo juste après",
     v("email") ? `• E-mail : ${v("email")}` : "",
     v("commentaire") ? `• Commentaire : ${v("commentaire")}` : "",

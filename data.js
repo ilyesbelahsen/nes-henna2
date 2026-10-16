@@ -5,15 +5,7 @@ const SITE_CONFIG = Object.freeze({
   tiktok: "https://www.tiktok.com/",
   prix: Object.freeze({ simple: 15, moyen: 30, difficile: 60 }),
   duree: Object.freeze({ simple: 30, moyen: 60, difficile: 120 }),
-  lieux: Object.freeze({
-    0: null,
-    1: null,
-    2: "Paris 11e",
-    3: "Paris 11e",
-    4: "Montreuil",
-    5: "Saint-Denis",
-    6: "Paris 11e",
-  }),
+  villes: Object.freeze(["Paris", "Perpignan", "Toulouse"]),
   horaires: Object.freeze([
     "10:00",
     "11:30",

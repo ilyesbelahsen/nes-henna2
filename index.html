@@ -30,15 +30,16 @@
         <span>Nes Henna</span>
       </a>
       <nav class="desktop-nav" aria-label="Navigation principale">
-        <a href="#realisations">Réalisations</a>
+                >Photos des modèles
         <a href="#tarifs">Tarifs</a>
         <a href="#apropos">À propos</a>
         <a href="#avis">Avis</a>
         <a href="#faq">FAQ</a>
+                  multiple
       </nav>
       <a href="#reserver" class="btn btn-primary btn-sm">Réserver</a>
     </header>
-
+                  >Ajoutez un ou plusieurs modèles. Vous pourrez les envoyer directement sur WhatsApp.</small
     <main>
       <!-- ================= ACCUEIL ================= -->
       <section id="accueil" class="hero">
@@ -61,13 +62,23 @@
               >Voir les réalisations</a
             >
           </div>
-          <img
-            class="hero-logo"
-            src="assets/Fleurs.png"
-            alt="Logo Nes Henna"
-            width="150"
-            height="150"
-          />
+          <div class="hero-flowers" aria-label="Logo Nes Henna">
+            <img
+              class="hero-flower breath"
+              src="assets/Fleurs.png"
+              alt="Logo Nes Henna"
+              width="150"
+              height="150"
+            />
+            <img
+              class="hero-flower swing"
+              src="assets/Fleurs.png"
+              alt=""
+              aria-hidden="true"
+              width="150"
+              height="150"
+            />
+          </div>
         </div>
       </section>
 
@@ -311,20 +322,32 @@
           <form id="booking" class="booking reveal" novalidate>
             <fieldset>
               <legend>1 · Date et lieu</legend>
+              <div class="field">
+                <span>Ville</span>
+                <input id="ville" name="ville" type="hidden" required />
+                <div
+                  class="cities"
+                  id="villes"
+                  role="listbox"
+                  aria-label="Choisir une ville"
+                ></div>
+              </div>
               <div
                 class="days"
                 id="days"
+                hidden
                 role="listbox"
                 aria-label="Choisir un jour"
               ></div>
               <div
                 class="slots"
                 id="slots"
+                hidden
                 role="listbox"
                 aria-label="Choisir un horaire"
               ></div>
               <p class="place" id="place-info" aria-live="polite">
-                Choisissez un jour pour voir la ville et les horaires.
+                Choisissez une ville pour voir les jours disponibles.
               </p>
               <p class="fine">
                 L'adresse exacte est communiquée uniquement après validation du
@@ -367,40 +390,57 @@
 
             <fieldset>
               <legend>3 · Votre modèle</legend>
-              <label class="field"
-                >Partie du corps
-                <select name="zone">
-                  <option>Main (dos)</option>
-                  <option>Paume</option>
-                  <option>Les deux mains</option>
-                  <option>Avant-bras</option>
-                  <option>Pied</option>
-                  <option>Autre</option>
-                </select>
-              </label>
-              <label class="field"
-                >Photo du modèle
-                <input
-                  name="photo"
-                  id="photo"
-                  type="file"
-                  accept="image/*,.heic,.heif"
-                />
-                <small id="photo-name"
-                  >Vous pourrez aussi l'envoyer directement sur WhatsApp.</small
-                >
-              </label>
-              <p class="fine gallery-hint">
-                Ou choisissez un motif dans la galerie :
-                <button
-                  type="button"
-                  class="btn-link inline"
-                  id="pick-from-gallery"
-                >
-                  voir la galerie
+              <div class="model-choice upload-choice">
+                <h3>1. Ajouter un modèle en photo</h3>
+                <div id="photo-fields">
+                  <div class="photo-row">
+                    <label class="field"
+                      >Photo du modèle
+                      <input
+                        name="photo"
+                        id="photo"
+                        type="file"
+                        accept="image/*,.heic,.heif"
+                      />
+                    </label>
+                    <label class="field"
+                      >Partie du corps
+                      <select name="zone">
+                        <option>Main (dos)</option>
+                        <option>Paume</option>
+                        <option>Les deux mains</option>
+                        <option>Avant-bras</option>
+                        <option>Pied</option>
+                        <option>Autre</option>
+                      </select>
+                    </label>
+                  </div>
+                </div>
+                <button type="button" class="btn-link inline" id="add-photo">
+                  + Ajouter un autre modèle
                 </button>
-              </p>
-              <p id="chosen-model" class="chosen" hidden></p>
+                <div id="uploaded-models" class="uploaded-models" hidden>
+                  <strong>Modèles importés</strong>
+                  <div id="uploaded-list" class="uploaded-list"></div>
+                </div>
+              </div>
+              <div class="model-choice gallery-choice">
+                <h3>2. Choisir un modèle existant</h3>
+                <p class="fine gallery-hint">
+                  Parcourez la galerie pour sélectionner un motif :
+                  <button
+                    type="button"
+                    class="btn-link inline"
+                    id="pick-from-gallery"
+                  >
+                    Voir la galerie
+                  </button>
+                </p>
+                <div id="chosen-model" class="chosen" hidden>
+                  <strong>Modèles choisis dans la galerie</strong>
+                  <div id="chosen-list" class="chosen-list"></div>
+                </div>
+              </div>
               <label class="field"
                 >Commentaire <span class="opt">(facultatif)</span
                 ><textarea
@@ -549,7 +589,7 @@
     <div class="lightbox" id="lightbox" hidden>
       <button class="lb-close" aria-label="Fermer">✕</button>
       <img id="lb-img" alt="" />
-      <button class="btn btn-primary" id="lb-choose">Choisir ce modèle</button>
+      <button class="btn btn-primary" id="lb-choose">Ajouter ce modèle</button>
     </div>
 
     <!-- ================= MODALES ================= -->
