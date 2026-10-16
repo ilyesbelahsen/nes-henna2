@@ -16,7 +16,6 @@
   --radius: 24px;
   --shadow: 0 10px 30px rgba(215, 52, 99, 0.16);
   --shadow-lg: 0 20px 50px rgba(163, 13, 45, 0.22);
-  --tabbar-h: 72px;
 }
 * {
   box-sizing: border-box;
@@ -38,7 +37,6 @@ body {
   background: var(--bg);
   line-height: 1.6;
   overflow-x: hidden;
-  padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom));
 }
 main,
 section,
@@ -901,62 +899,6 @@ h3 {
   opacity: 0.6;
 }
 
-/* ===== Barre d'onglets façon iOS ===== */
-.tabbar {
-  position: fixed;
-  bottom: 0;
-  inset-inline: 0;
-  z-index: 60;
-  height: calc(var(--tabbar-h) + env(safe-area-inset-bottom));
-  padding-bottom: env(safe-area-inset-bottom);
-  display: flex;
-  justify-content: space-around;
-  align-items: flex-start;
-  padding-top: 0.45rem;
-  background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: saturate(180%) blur(18px);
-  -webkit-backdrop-filter: saturate(180%) blur(18px);
-  border-top: 1px solid rgba(215, 52, 99, 0.15);
-}
-.tabbar a {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.1rem;
-  text-decoration: none;
-  font-size: 0.68rem;
-  font-weight: 600;
-  color: var(--muted);
-  transition:
-    color 0.2s,
-    transform 0.2s;
-}
-.tabbar i {
-  font-style: normal;
-  font-size: 1.35rem;
-}
-.tabbar a.active {
-  color: var(--pink);
-}
-.tabbar .tab-cta {
-  transform: translateY(-16px);
-}
-.tabbar .tab-cta i {
-  display: grid;
-  place-items: center;
-  width: 54px;
-  height: 54px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--pink), var(--crimson));
-  box-shadow: 0 8px 20px rgba(163, 13, 45, 0.4);
-  font-size: 1.5rem;
-  margin-bottom: 0.1rem;
-}
-.tabbar .tab-cta span {
-  color: var(--pink);
-}
-
 /* ===== Lightbox & modales ===== */
 .lightbox,
 .modal {
@@ -1110,12 +1052,6 @@ h3 {
   }
   .hero {
     padding-top: 9rem;
-  }
-  .tabbar {
-    display: none;
-  }
-  body {
-    padding-bottom: 0;
   }
 }
 

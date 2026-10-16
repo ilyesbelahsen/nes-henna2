@@ -143,26 +143,12 @@ $$("[data-pick]").forEach((b) =>
   }),
 );
 
-/* ---------- En-tête & barre d'onglets ---------- */
+/* ---------- En-tête ---------- */
 const topbar = $("#topbar");
 addEventListener(
   "scroll",
   () => topbar.classList.toggle("scrolled", scrollY > 10),
   { passive: true },
-);
-const tabs = $$(".tabbar a");
-const secObs = new IntersectionObserver(
-  (es) =>
-    es.forEach((e) => {
-      if (e.isIntersecting)
-        tabs.forEach((t) =>
-          t.classList.toggle("active", t.dataset.tab === e.target.id),
-        );
-    }),
-  { threshold: 0.35 },
-);
-["accueil", "realisations", "tarifs", "reserver", "faq"].forEach((id) =>
-  secObs.observe($("#" + id)),
 );
 
 /* ---------- Défilement continu des avis ---------- */
