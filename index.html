@@ -30,16 +30,17 @@
         <span>Nes Henna</span>
       </a>
       <nav class="desktop-nav" aria-label="Navigation principale">
-                >Photos des modèles
-        <a href="#tarifs">Tarifs</a>
-        <a href="#apropos">À propos</a>
+        <a href="#accueil">Accueil</a>
+        <a href="#realisations">Réalisation</a>
+        <a href="#comment-reserver">Comment réserver</a>
         <a href="#avis">Avis</a>
+        <a href="#tarifs">Tarif</a>
+        <a href="#reserver">Réserver</a>
+        <a href="#apropos">À propos</a>
         <a href="#faq">FAQ</a>
-                  multiple
       </nav>
       <a href="#reserver" class="btn btn-primary btn-sm">Réserver</a>
     </header>
-                  >Ajoutez un ou plusieurs modèles. Vous pourrez les envoyer directement sur WhatsApp.</small
     <main>
       <!-- ================= ACCUEIL ================= -->
       <section id="accueil" class="hero">
@@ -63,13 +64,6 @@
             >
           </div>
           <div class="hero-flowers" aria-label="Logo Nes Henna">
-            <img
-              class="hero-flower breath"
-              src="assets/Fleurs.png"
-              alt="Logo Nes Henna"
-              width="150"
-              height="150"
-            />
             <img
               class="hero-flower swing"
               src="assets/Fleurs.png"
@@ -129,13 +123,6 @@
               <p class="price">
                 à partir de <strong id="p-simple">15</strong> €
               </p>
-              <p class="duree">⏱ environ <span id="d-simple">30</span> min</p>
-              <a
-                href="#reserver"
-                class="btn btn-ghost btn-block"
-                data-pick="simple"
-                >Choisir ce niveau</a
-              >
             </article>
 
             <article class="price-card reveal" data-level="moyen">
@@ -149,13 +136,6 @@
               <p class="price">
                 à partir de <strong id="p-moyen">30</strong> €
               </p>
-              <p class="duree">⏱ environ <span id="d-moyen">60</span> min</p>
-              <a
-                href="#reserver"
-                class="btn btn-ghost btn-block"
-                data-pick="moyen"
-                >Choisir ce niveau</a
-              >
             </article>
 
             <article class="price-card featured reveal" data-level="difficile">
@@ -170,15 +150,6 @@
               <p class="price">
                 à partir de <strong id="p-difficile">60</strong> €
               </p>
-              <p class="duree">
-                ⏱ environ <span id="d-difficile">120</span> min
-              </p>
-              <a
-                href="#reserver"
-                class="btn btn-primary btn-block"
-                data-pick="difficile"
-                >Choisir ce niveau</a
-              >
             </article>
           </div>
 
@@ -242,7 +213,7 @@
       </section>
 
       <!-- ================= COMMENT ÇA MARCHE ================= -->
-      <section class="section steps-section">
+      <section id="comment-reserver" class="section steps-section">
         <div class="container">
           <p class="eyebrow light section-title reveal">Simple comme bonjour</p>
           <h2 class="reveal light">Réserver en 4 étapes</h2>
@@ -388,6 +359,29 @@
               /></label>
             </fieldset>
 
+            <div class="people-choice">
+              <label class="field" for="participants"
+                >Nombre de personnes
+                <input
+                  id="participants"
+                  name="participants"
+                  type="number"
+                  min="1"
+                  step="1"
+                  value="1"
+                  required
+                />
+              </label>
+              <p id="participants-help" class="fine">
+                Indiquez le nombre de personnes qui viendront au rendez-vous.
+              </p>
+              <p
+                id="models-requirement"
+                class="models-requirement"
+                role="alert"
+              ></p>
+            </div>
+
             <fieldset>
               <legend>3 · Votre modèle</legend>
               <div class="model-choice upload-choice">
@@ -420,7 +414,10 @@
                   + Ajouter un autre modèle
                 </button>
                 <div id="uploaded-models" class="uploaded-models" hidden>
-                  <strong>Modèles importés</strong>
+                  <strong
+                    >Modèles importés
+                    <span id="uploaded-count">(0)</span></strong
+                  >
                   <div id="uploaded-list" class="uploaded-list"></div>
                 </div>
               </div>
@@ -437,28 +434,12 @@
                   </button>
                 </p>
                 <div id="chosen-model" class="chosen" hidden>
-                  <strong>Modèles choisis dans la galerie</strong>
+                  <strong
+                    >Modèles choisis dans la galerie
+                    <span id="chosen-count">(0)</span></strong
+                  >
                   <div id="chosen-list" class="chosen-list"></div>
                 </div>
-              </div>
-              <div class="people-choice">
-                <label class="field" for="participants"
-                  >Nombre de personnes
-                  <input
-                    id="participants"
-                    name="participants"
-                    type="number"
-                    min="1"
-                    step="1"
-                    value="1"
-                    disabled
-                    required
-                  />
-                </label>
-                <p id="participants-help" class="fine">
-                  Sélectionnez au moins un modèle pour définir le nombre de
-                  personnes.
-                </p>
               </div>
               <label class="field"
                 >Commentaire <span class="opt">(facultatif)</span
@@ -486,8 +467,12 @@
             >
 
             <p class="error" id="form-error" role="alert" hidden></p>
-            <button class="btn btn-primary btn-lg btn-block" type="submit">
-              Envoyer ma demande sur WhatsApp
+            <button
+              class="btn btn-primary btn-lg btn-block"
+              id="booking-submit"
+              type="submit"
+            >
+              Envoyer ma demande
             </button>
           </form>
         </div>

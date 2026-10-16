@@ -16,7 +16,6 @@ const waLink = (text) =>
 function initializeSiteDetails() {
   Object.keys(SITE_CONFIG.prix).forEach((level) => {
     $("#p-" + level).textContent = SITE_CONFIG.prix[level];
-    $("#d-" + level).textContent = SITE_CONFIG.duree[level];
   });
 
   $("#link-insta").href = SITE_CONFIG.instagram;
@@ -126,9 +125,11 @@ $("#lightbox").addEventListener("click", (e) => {
 function renderChosenModels() {
   const chosen = $("#chosen-model");
   const list = $("#chosen-list");
+  const count = $("#chosen-count");
   list.replaceChildren();
   chosen.hidden = chosenModels.length === 0;
-  chosenModels.forEach((model, index) => {
+  count.textContent = `(${chosenModels.length})`;
+  chosenModels.forEach((model) => {
     const item = document.createElement("div");
     item.className = "chosen-item";
     const image = document.createElement("img");
@@ -136,6 +137,10 @@ function renderChosenModels() {
     image.alt = model.alt;
     const name = document.createElement("span");
     name.textContent = model.alt;
+    const quantity = createQuantityControl(model.quantity || 1, (value) => {
+      model.quantity = value;
+      renderChosenModels();
+    });
     const remove = document.createElement("button");
     remove.type = "button";
     remove.className = "remove-model";
@@ -144,15 +149,41 @@ function renderChosenModels() {
       chosenModels.splice(index, 1);
       renderChosenModels();
     });
-    item.append(image, name, remove);
+    item.append(image, name, quantity, remove);
     list.append(item);
   });
-  updatePeopleLimit();
+  updateModelRequirement();
+}
+function createQuantityControl(value, onChange) {
+  const control = document.createElement("div");
+  control.className = "model-quantity";
+  const decrease = document.createElement("button");
+  decrease.type = "button";
+  decrease.textContent = "−";
+  decrease.setAttribute("aria-label", "Diminuer la quantité");
+  const input = document.createElement("input");
+  input.type = "number";
+  input.min = "1";
+  input.step = "1";
+  input.value = value;
+  input.setAttribute("aria-label", "Quantité du modèle");
+  const increase = document.createElement("button");
+  increase.type = "button";
+  increase.textContent = "+";
+  increase.setAttribute("aria-label", "Augmenter la quantité");
+  const update = (nextValue) =>
+    onChange(Math.max(1, Math.floor(Number(nextValue) || 1)));
+  decrease.addEventListener("click", () => update(Number(input.value) - 1));
+  increase.addEventListener("click", () => update(Number(input.value) + 1));
+  input.addEventListener("change", () => update(input.value));
+  control.append(decrease, input, increase);
+  return control;
 }
 $("#lb-choose").addEventListener("click", () => {
   if (!lbPhoto) return;
-  if (!chosenModels.some((model) => model.src === lbPhoto.src))
-    chosenModels.push(lbPhoto);
+  const existingModel = chosenModels.find((model) => model.src === lbPhoto.src);
+  if (existingModel) existingModel.quantity += 1;
+  else chosenModels.push({ ...lbPhoto, quantity: 1 });
   renderChosenModels();
   selectedLevel = lbPhoto.niveau;
   $("#lightbox").hidden = true;
@@ -160,13 +191,6 @@ $("#lb-choose").addEventListener("click", () => {
 });
 $("#pick-from-gallery").addEventListener("click", () =>
   $("#realisations").scrollIntoView({ behavior: "smooth" }),
-);
-
-/* Boutons "Choisir ce niveau" */
-$$("[data-pick]").forEach((b) =>
-  b.addEventListener("click", () => {
-    selectedLevel = b.dataset.pick;
-  }),
 );
 
 /* ---------- En-tête ---------- */
@@ -340,14 +364,22 @@ function updateUploadedModels() {
     (row) => {
       const input = row.querySelector('input[type="file"]');
       const zone = row.querySelector('select[name="zone"]');
-      return [...input.files].map((file) => ({ file, zone: zone.value }));
+      const quantity = Number(row.dataset.quantity) || 1;
+      return [...input.files].map((file) => ({
+        file,
+        zone: zone.value,
+        quantity,
+        row,
+      }));
     },
   );
   const uploadedModels = $("#uploaded-models");
   const uploadedList = $("#uploaded-list");
+  const uploadedCount = $("#uploaded-count");
   uploadedList.replaceChildren();
   uploadedModels.hidden = models.length === 0;
-  models.forEach(({ file, zone }) => {
+  uploadedCount.textContent = `(${models.length})`;
+  models.forEach(({ file, zone, quantity, row }) => {
     const item = document.createElement("div");
     item.className = "uploaded-item";
     const image = document.createElement("img");
@@ -361,41 +393,57 @@ function updateUploadedModels() {
     const bodyPart = document.createElement("small");
     bodyPart.className = "model-zone";
     bodyPart.textContent = `Partie : ${zone}`;
+    const quantityControl = createQuantityControl(quantity, (value) => {
+      row.dataset.quantity = value;
+      updateUploadedModels();
+    });
     details.append(name, bodyPart);
-    item.append(image, details);
+    item.append(image, details, quantityControl);
     uploadedList.append(item);
   });
-  updatePeopleLimit();
+  updateModelRequirement();
 }
 
 function getModelCount() {
   const importedCount = [
     ...photoFields.querySelectorAll('input[type="file"]'),
-  ].reduce((count, input) => count + input.files.length, 0);
-  return importedCount + chosenModels.length;
+  ].reduce(
+    (count, input) =>
+      count +
+      (input.files.length
+        ? Number(input.closest(".photo-row").dataset.quantity) || 1
+        : 0),
+    0,
+  );
+  const chosenCount = chosenModels.reduce(
+    (count, model) => count + (model.quantity || 1),
+    0,
+  );
+  return importedCount + chosenCount;
 }
 
-function updatePeopleLimit() {
+function updateModelRequirement() {
   const peopleInput = $("#participants");
   const help = $("#participants-help");
+  const requirement = $("#models-requirement");
+  const submit = $("#booking-submit");
   const modelCount = getModelCount();
-  peopleInput.disabled = modelCount === 0;
-  peopleInput.max = modelCount || 1;
-  if (modelCount === 0) {
-    peopleInput.value = 1;
-    help.textContent =
-      "Sélectionnez au moins un modèle pour définir le nombre de personnes.";
-    return;
-  }
-  if (Number(peopleInput.value) > modelCount) peopleInput.value = modelCount;
-  help.textContent = `${modelCount} modèle${modelCount > 1 ? "s" : ""} sélectionné${modelCount > 1 ? "s" : ""} · maximum ${modelCount} personne${modelCount > 1 ? "s" : ""}.`;
+  const peopleCount = Math.max(1, Number(peopleInput.value) || 1);
+  peopleInput.value = peopleCount;
+  const missing = peopleCount - modelCount;
+  help.textContent = `${modelCount} modèle${modelCount > 1 ? "s" : ""} sélectionné${modelCount > 1 ? "s" : ""} pour ${peopleCount} personne${peopleCount > 1 ? "s" : ""}.`;
+  submit.disabled = missing > 0;
+  requirement.hidden = missing <= 0;
+  requirement.textContent =
+    missing > 0
+      ? `Ajoutez encore ${missing} modèle${missing > 1 ? "s" : ""} au minimum pour pouvoir envoyer la demande.`
+      : "Le nombre de modèles est suffisant pour toutes les personnes.";
 }
 
 $("#participants").addEventListener("input", (e) => {
-  const modelCount = getModelCount();
   const value = Number(e.target.value);
-  if (modelCount && value > modelCount) e.target.value = modelCount;
   if (value < 1) e.target.value = 1;
+  updateModelRequirement();
 });
 
 photoFields.addEventListener("change", updateUploadedModels);
@@ -444,6 +492,7 @@ $("#add-photo").addEventListener("click", () => {
   row.append(label, zoneLabel, removeButton);
   photoFields.append(row);
 });
+updateModelRequirement();
 
 /* ---------- Formulaire → WhatsApp + page de confirmation ---------- */
 $("#booking").addEventListener("submit", (e) => {
@@ -455,14 +504,12 @@ $("#booking").addEventListener("submit", (e) => {
   if (!v("ville")) problems.push("une ville");
   const modelCount = getModelCount();
   const peopleCount = Number(v("participants"));
-  if (!modelCount)
-    problems.push("au moins un modèle pour définir le nombre de personnes");
-  else if (
-    !Number.isInteger(peopleCount) ||
-    peopleCount < 1 ||
-    peopleCount > modelCount
-  )
-    problems.push(`un nombre de personnes entre 1 et ${modelCount}`);
+  if (!Number.isInteger(peopleCount) || peopleCount < 1)
+    problems.push("un nombre de personnes valide");
+  else if (modelCount < peopleCount)
+    problems.push(
+      `au moins ${peopleCount} modèle${peopleCount > 1 ? "s" : ""} pour les personnes indiquées`,
+    );
   if (!v("prenom") || !v("nom")) problems.push("votre prénom et votre nom");
   if (!/^[+\d][\d\s.()-]{7,}$/.test(v("whatsapp")))
     problems.push("un numéro WhatsApp valide");
@@ -492,7 +539,7 @@ $("#booking").addEventListener("submit", (e) => {
     `• Niveau : ${LEVEL_LABELS[niveau] || niveau} (à partir de ${SITE_CONFIG.prix[niveau]} €)`,
     `• Parties du corps : ${zones.join(", ")}`,
     chosenModels.length
-      ? `• Modèles choisis dans la galerie : ${chosenModels.map((model) => model.alt).join(" | ")}`
+      ? `• Modèles choisis dans la galerie : ${chosenModels.map((model) => `${model.alt} x${model.quantity || 1}`).join(" | ")}`
       : "• Je vous envoie mon modèle en photo juste après",
     v("email") ? `• E-mail : ${v("email")}` : "",
     v("commentaire") ? `• Commentaire : ${v("commentaire")}` : "",

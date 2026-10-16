@@ -26,6 +26,7 @@ html {
   scroll-behavior: smooth;
   scroll-padding-top: 76px;
   -webkit-text-size-adjust: 100%;
+  overflow-x: hidden;
 }
 body {
   font-family:
@@ -55,28 +56,28 @@ main {
   flex-direction: column;
 }
 main #realisations {
-  order: 1;
-}
-main .steps-section {
   order: 2;
 }
-main #avis {
+main .steps-section {
   order: 3;
 }
-main #tarifs {
+main #avis {
   order: 4;
 }
-main #reserver {
+main #tarifs {
   order: 5;
 }
-main #apropos {
+main #reserver {
   order: 6;
 }
-main #faq {
+main #apropos {
   order: 7;
 }
-main .final {
+main #faq {
   order: 8;
+}
+main .final {
+  order: 9;
 }
 img {
   max-width: 100%;
@@ -326,7 +327,7 @@ h3 {
   flex-direction: column;
   align-items: center;
   gap: 0.2rem;
-  width: min(150px, 40vw);
+  width: min(205px, 52vw);
   margin: 2rem auto 0;
 }
 .hero-flower {
@@ -336,28 +337,16 @@ h3 {
   object-fit: contain;
   transform-origin: 50% 72%;
 }
-.hero-flower.breath {
-  animation: flower-breath 3.5s ease-in-out infinite;
-}
 .hero-flower.swing {
-  animation: flower-swing 4.2s ease-in-out 0.25s infinite;
-}
-@keyframes flower-breath {
-  0%,
-  100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.1);
-  }
+  animation: flower-swing 3.8s ease-in-out 0.25s infinite;
 }
 @keyframes flower-swing {
   0%,
   100% {
-    transform: rotate(-5deg);
+    transform: rotate(-7deg);
   }
   50% {
-    transform: rotate(5deg);
+    transform: rotate(7deg);
   }
 }
 /* ===== Galerie ===== */
@@ -513,9 +502,6 @@ h3 {
     600 2.4rem "Fredoka",
     sans-serif;
   color: var(--pink);
-}
-.duree {
-  margin-bottom: 0.6rem;
 }
 .notice {
   margin-top: 2rem;
@@ -768,6 +754,7 @@ h3 {
   border: 1px solid #f3d4dc;
   border-radius: 18px;
   background: #fffafb;
+  overflow: hidden;
 }
 .model-choice + .model-choice {
   margin-top: 0.8rem;
@@ -793,6 +780,17 @@ h3 {
 .people-choice input:disabled {
   cursor: not-allowed;
   opacity: 0.6;
+}
+.models-requirement {
+  margin-top: 0.5rem;
+  color: var(--crimson);
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+#booking-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: saturate(0.65);
 }
 .photo-help {
   display: block;
@@ -874,20 +872,60 @@ h3 {
   display: block;
   margin-bottom: 0.6rem;
   color: var(--crimson);
+  font-size: 0.9rem;
 }
 .chosen-list,
 .uploaded-list {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
   gap: 0.6rem;
 }
 .chosen-item,
 .uploaded-item {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 0.55rem;
   min-width: 0;
+  padding: 0.55rem;
+  border: 1px solid #f3d4dc;
+  border-radius: 12px;
+  background: #fff;
   font-size: 0.78rem;
+}
+.model-quantity {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  border: 1px solid #f3d4dc;
+  border-radius: 9px;
+  overflow: hidden;
+  background: #fff;
+}
+.model-quantity button {
+  width: 1.6rem;
+  height: 1.6rem;
+  border: 0;
+  background: #fff3f6;
+  color: var(--crimson);
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+}
+.model-quantity input {
+  width: 2rem;
+  height: 1.6rem;
+  padding: 0;
+  border: 0;
+  background: #fff;
+  color: var(--ink);
+  text-align: center;
+  font:
+    600 0.78rem "Poppins",
+    sans-serif;
+}
+.model-quantity input:focus {
+  outline: none;
 }
 .chosen-item img,
 .uploaded-item img {
@@ -899,7 +937,7 @@ h3 {
 }
 .chosen-item span,
 .uploaded-item span {
-  flex: 1;
+  flex: 1 1 8rem;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -924,6 +962,9 @@ h3 {
   background: none;
   color: var(--crimson);
   cursor: pointer;
+  flex: 0 0 auto;
+  padding: 0.25rem;
+  white-space: nowrap;
   font:
     600 0.75rem "Poppins",
     sans-serif;
