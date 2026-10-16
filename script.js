@@ -147,6 +147,7 @@ function renderChosenModels() {
     item.append(image, name, remove);
     list.append(item);
   });
+  updatePeopleLimit();
 }
 $("#lb-choose").addEventListener("click", () => {
   if (!lbPhoto) return;
@@ -364,7 +365,38 @@ function updateUploadedModels() {
     item.append(image, details);
     uploadedList.append(item);
   });
+  updatePeopleLimit();
 }
+
+function getModelCount() {
+  const importedCount = [
+    ...photoFields.querySelectorAll('input[type="file"]'),
+  ].reduce((count, input) => count + input.files.length, 0);
+  return importedCount + chosenModels.length;
+}
+
+function updatePeopleLimit() {
+  const peopleInput = $("#participants");
+  const help = $("#participants-help");
+  const modelCount = getModelCount();
+  peopleInput.disabled = modelCount === 0;
+  peopleInput.max = modelCount || 1;
+  if (modelCount === 0) {
+    peopleInput.value = 1;
+    help.textContent =
+      "Sélectionnez au moins un modèle pour définir le nombre de personnes.";
+    return;
+  }
+  if (Number(peopleInput.value) > modelCount) peopleInput.value = modelCount;
+  help.textContent = `${modelCount} modèle${modelCount > 1 ? "s" : ""} sélectionné${modelCount > 1 ? "s" : ""} · maximum ${modelCount} personne${modelCount > 1 ? "s" : ""}.`;
+}
+
+$("#participants").addEventListener("input", (e) => {
+  const modelCount = getModelCount();
+  const value = Number(e.target.value);
+  if (modelCount && value > modelCount) e.target.value = modelCount;
+  if (value < 1) e.target.value = 1;
+});
 
 photoFields.addEventListener("change", updateUploadedModels);
 photoFields.addEventListener("click", (e) => {
@@ -421,6 +453,16 @@ $("#booking").addEventListener("submit", (e) => {
   const v = (n) => f.elements[n].value.trim();
   const problems = [];
   if (!v("ville")) problems.push("une ville");
+  const modelCount = getModelCount();
+  const peopleCount = Number(v("participants"));
+  if (!modelCount)
+    problems.push("au moins un modèle pour définir le nombre de personnes");
+  else if (
+    !Number.isInteger(peopleCount) ||
+    peopleCount < 1 ||
+    peopleCount > modelCount
+  )
+    problems.push(`un nombre de personnes entre 1 et ${modelCount}`);
   if (!v("prenom") || !v("nom")) problems.push("votre prénom et votre nom");
   if (!/^[+\d][\d\s.()-]{7,}$/.test(v("whatsapp")))
     problems.push("un numéro WhatsApp valide");
@@ -446,6 +488,7 @@ $("#booking").addEventListener("submit", (e) => {
     `• Nom : ${v("prenom")} ${v("nom")}`,
     `• Créneau : ${dateTxt}`,
     `• Lieu : ${selectedDate.lieu}`,
+    `• Nombre de personnes : ${peopleCount}`,
     `• Niveau : ${LEVEL_LABELS[niveau] || niveau} (à partir de ${SITE_CONFIG.prix[niveau]} €)`,
     `• Parties du corps : ${zones.join(", ")}`,
     chosenModels.length
