@@ -167,7 +167,7 @@ export async function createCalendarEvent(booking, files) {
   await calendar.events.insert({
     calendarId: CALENDAR_ID,
     requestBody: {
-      summary: `Demande de RDV Henne : ${booking.prenom} ${booking.nom}`,
+      summary: `Nes-Henna : ${booking.prenom} ${booking.nom}`,
       location: booking.ville,
       description: [
         `Téléphone : ${booking.telephone}`,
