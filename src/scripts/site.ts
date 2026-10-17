@@ -1,29 +1,64 @@
 /* =====================================================================
    NES HENNA – script du site vitrine
-  >>> Modifiez les donnees dans data.js <<<
+  >>> Modifiez les données dans src/data/site.ts <<<
    ===================================================================== */
-const $ = (s, r = document) => r.querySelector(s);
-const $$ = (s, r = document) => [...r.querySelectorAll(s)];
-let chosenModels = [];
-let selectedLevel = "simple";
-let selectedDate = null,
-  selectedSlot = null;
+import {
+  GALLERY_PHOTOS,
+  LEVEL_LABELS,
+  SITE_CONFIG,
+  type GalleryPhoto,
+  type Level,
+} from "../data/site";
+
+interface ChosenModel extends GalleryPhoto {
+  quantity: number;
+}
+
+interface SelectedDate {
+  date: Date;
+  lieu: string;
+}
+
+interface DragState {
+  startX: number;
+  offset: number;
+}
+
+const $ = <T extends Element = HTMLElement>(
+  selector: string,
+  root: ParentNode = document,
+): T => {
+  const element = root.querySelector<T>(selector);
+  if (!element) throw new Error(`Élément requis introuvable : ${selector}`);
+  return element;
+};
+const $$ = <T extends Element = HTMLElement>(
+  selector: string,
+  root: ParentNode = document,
+): T[] => [...root.querySelectorAll<T>(selector)];
+let chosenModels: ChosenModel[] = [];
+let selectedLevel: Level = "simple";
+let selectedDate: SelectedDate | null = null;
+let selectedSlot: string | null = null;
+
+// Déclaration uniquement typée : conserve le ReferenceError préexistant au clic de suppression.
+declare const index: number;
 
 /* ---------- Prix & liens ---------- */
-const waLink = (text) =>
+const waLink = (text: string) =>
   `https://wa.me/${SITE_CONFIG.whatsapp}?text=${encodeURIComponent(text)}`;
 
 function initializeSiteDetails() {
-  Object.keys(SITE_CONFIG.prix).forEach((level) => {
-    $("#p-" + level).textContent = SITE_CONFIG.prix[level];
+  (Object.keys(SITE_CONFIG.prix) as Level[]).forEach((level) => {
+    $("#p-" + level).textContent = String(SITE_CONFIG.prix[level]);
   });
 
-  $("#link-insta").href = SITE_CONFIG.instagram;
-  $("#link-tiktok").href = SITE_CONFIG.tiktok;
-  $("#wa-direct").href = waLink(
+  $<HTMLAnchorElement>("#link-insta").href = SITE_CONFIG.instagram;
+  $<HTMLAnchorElement>("#link-tiktok").href = SITE_CONFIG.tiktok;
+  $<HTMLAnchorElement>("#wa-direct").href = waLink(
     "Bonjour Nes Henna 👋 J'aimerais avoir des informations sur vos prestations de henné.",
   );
-  $("#year").textContent = new Date().getFullYear();
+  $("#year").textContent = String(new Date().getFullYear());
 }
 
 initializeSiteDetails();
@@ -56,48 +91,30 @@ setTimeout(() => $$(".reveal").forEach((el) => el.classList.add("in")), 2500);
 
 /* ---------- Galerie ---------- */
 function initializeGallery() {
-  // grille
-  const g = $("#gallery");
   GALLERY_PHOTOS.forEach((photo, index) => {
-    const item = document.createElement("div");
-    item.className = "g-item reveal";
-    item.dataset.niveau = photo.niveau;
-    item.style.setProperty("--d", (index % 4) * 0.07 + "s");
-    item.append(makeImg(photo.src, photo.alt));
-    item.insertAdjacentHTML(
-      "beforeend",
-      `<span class="tag">${LEVEL_LABELS[photo.niveau]}</span>`,
-    );
+    const item = document.querySelector<HTMLElement>(`.g-item[data-index="${index}"]`);
+    if (!item) return;
     item.addEventListener("click", () => openLightbox(photo));
-    g.append(item);
+    const image = $<HTMLImageElement>("img", item);
+    image.addEventListener("error", () => {
+      const fallback = document.createElement("div");
+      fallback.className = "g-fallback";
+      fallback.textContent = "🌸";
+      image.replaceWith(fallback);
+    });
     observer.observe(item);
   });
   // photos des cartes tarifs
-  const examples = {
+  const examples: Record<Level, GalleryPhoto> = {
     simple: GALLERY_PHOTOS[3],
     moyen: GALLERY_PHOTOS[0],
     difficile: GALLERY_PHOTOS[8],
   };
   $$(".price-photo").forEach((element) => {
-    element.style.backgroundImage = `url('${examples[element.dataset.photo].src}')`;
+    const level = element.dataset.photo as Level;
+    element.style.backgroundImage = `url('${examples[level].src}')`;
   });
 }
-function makeImg(src, alt) {
-  const img = new Image();
-  img.src = src;
-  img.alt = alt;
-  img.loading = "lazy";
-  img.decoding = "async";
-  img.addEventListener("error", () => {
-    // si une photo ne charge pas : repli coloré
-    const f = document.createElement("div");
-    f.className = "g-fallback";
-    f.textContent = "🌸";
-    img.replaceWith(f);
-  });
-  return img;
-}
-
 /* Filtres */
 $$(".chip").forEach((c) =>
   c.addEventListener("click", () => {
@@ -111,16 +128,17 @@ $$(".chip").forEach((c) =>
 );
 
 /* Lightbox */
-let lbPhoto = null;
-function openLightbox(p) {
+let lbPhoto: GalleryPhoto | null = null;
+function openLightbox(p: GalleryPhoto) {
   lbPhoto = p;
-  $("#lb-img").src = p.src.replace("w=700", "w=1200");
-  $("#lb-img").alt = p.alt;
+  $<HTMLImageElement>("#lb-img").src = p.src.replace("w=700", "w=1200");
+  $<HTMLImageElement>("#lb-img").alt = p.alt;
   $("#lightbox").hidden = false;
 }
 $(".lb-close").addEventListener("click", () => ($("#lightbox").hidden = true));
 $("#lightbox").addEventListener("click", (e) => {
-  if (e.target.id === "lightbox") e.currentTarget.hidden = true;
+  if (e.target instanceof HTMLElement && e.target.id === "lightbox")
+    (e.currentTarget as HTMLElement).hidden = true;
 });
 function renderChosenModels() {
   const chosen = $("#chosen-model");
@@ -154,7 +172,10 @@ function renderChosenModels() {
   });
   updateModelRequirement();
 }
-function createQuantityControl(value, onChange) {
+function createQuantityControl(
+  value: number,
+  onChange: (value: number) => void,
+) {
   const control = document.createElement("div");
   control.className = "model-quantity";
   const decrease = document.createElement("button");
@@ -165,13 +186,13 @@ function createQuantityControl(value, onChange) {
   input.type = "number";
   input.min = "1";
   input.step = "1";
-  input.value = value;
+  input.value = String(value);
   input.setAttribute("aria-label", "Quantité du modèle");
   const increase = document.createElement("button");
   increase.type = "button";
   increase.textContent = "+";
   increase.setAttribute("aria-label", "Augmenter la quantité");
-  const update = (nextValue) =>
+  const update = (nextValue: number | string) =>
     onChange(Math.max(1, Math.floor(Number(nextValue) || 1)));
   decrease.addEventListener("click", () => update(Number(input.value) - 1));
   increase.addEventListener("click", () => update(Number(input.value) + 1));
@@ -181,9 +202,10 @@ function createQuantityControl(value, onChange) {
 }
 $("#lb-choose").addEventListener("click", () => {
   if (!lbPhoto) return;
-  const existingModel = chosenModels.find((model) => model.src === lbPhoto.src);
+  const photo = lbPhoto;
+  const existingModel = chosenModels.find((model) => model.src === photo.src);
   if (existingModel) existingModel.quantity += 1;
-  else chosenModels.push({ ...lbPhoto, quantity: 1 });
+  else chosenModels.push({ ...photo, quantity: 1 });
   renderChosenModels();
   selectedLevel = lbPhoto.niveau;
   $("#lightbox").hidden = true;
@@ -203,20 +225,20 @@ addEventListener(
 
 /* ---------- Défilement continu des avis ---------- */
 function initializeReviewsMarquee() {
-  const track = $("[data-reviews-track]");
+  const track = document.querySelector<HTMLElement>("[data-reviews-track]");
   if (!track) return;
 
   const duration = 26;
-  let drag = null;
+  let drag: DragState | null = null;
 
   $$(".review", track).forEach((review) => {
-    const clone = review.cloneNode(true);
+    const clone = review.cloneNode(true) as HTMLElement;
     clone.classList.remove("reveal");
     clone.setAttribute("aria-hidden", "true");
     track.append(clone);
   });
 
-  track.addEventListener("pointerdown", (event) => {
+  track.addEventListener("pointerdown", (event: PointerEvent) => {
     if (event.button !== 0) return;
     const transform = getComputedStyle(track).transform;
     const offset = transform === "none" ? 0 : new DOMMatrix(transform).m41;
@@ -227,13 +249,13 @@ function initializeReviewsMarquee() {
     drag = { startX: event.clientX, offset };
   });
 
-  track.addEventListener("pointermove", (event) => {
+  track.addEventListener("pointermove", (event: PointerEvent) => {
     if (!drag) return;
     const offset = drag.offset + event.clientX - drag.startX;
     track.style.transform = `translateX(${offset}px)`;
   });
 
-  const finishDrag = (event) => {
+  const finishDrag = (event: PointerEvent) => {
     if (!drag) return;
     const loopDistance = track.scrollWidth / 2;
     const offset = drag.offset + event.clientX - drag.startX;
@@ -272,14 +294,14 @@ const MOIS = [
   "déc.",
 ];
 // Créneau « déjà pris » simulé, de façon stable (à remplacer par un vrai agenda)
-function isTaken(d, h) {
+function isTaken(d: Date, h: string) {
   const n = d.getDate() * 7 + parseInt(h, 10) * 3;
   return n % 5 === 0;
 }
 const daysEl = $("#days"),
   slotsEl = $("#slots"),
   placeEl = $("#place-info"),
-  villeEl = $("#ville"),
+  villeEl = $<HTMLInputElement>("#ville"),
   villesEl = $("#villes");
 
 SITE_CONFIG.villes.forEach((ville) => {
@@ -302,7 +324,7 @@ SITE_CONFIG.villes.forEach((ville) => {
   villesEl.append(button);
 });
 
-function renderSlots(date, lieu) {
+function renderSlots(date: Date, lieu: string) {
   slotsEl.innerHTML = "";
   SITE_CONFIG.horaires.forEach((h) => {
     const slot = document.createElement("button");
@@ -324,7 +346,7 @@ function renderSlots(date, lieu) {
   });
 }
 
-function selectDay(button, date, lieu) {
+function selectDay(button: HTMLButtonElement, date: Date, lieu: string) {
   $$(".day").forEach((item) => item.classList.remove("sel"));
   button.classList.add("sel");
   selectedDate = { date, lieu };
@@ -334,7 +356,7 @@ function selectDay(button, date, lieu) {
   renderSlots(date, lieu);
 }
 
-function buildDays(lieu) {
+function buildDays(lieu: string) {
   daysEl.innerHTML = "";
   slotsEl.innerHTML = "";
   slotsEl.hidden = true;
@@ -360,12 +382,13 @@ const photoFields = $("#photo-fields");
 let photoCount = 1;
 
 function updateUploadedModels() {
-  const models = [...photoFields.querySelectorAll(".photo-row")].flatMap(
+  const models = [...photoFields.querySelectorAll<HTMLElement>(".photo-row")].flatMap(
     (row) => {
-      const input = row.querySelector('input[type="file"]');
-      const zone = row.querySelector('select[name="zone"]');
+      const input = row.querySelector<HTMLInputElement>('input[type="file"]');
+      const zone = row.querySelector<HTMLSelectElement>('select[name="zone"]');
+      if (!input || !zone) return [];
       const quantity = Number(row.dataset.quantity) || 1;
-      return [...input.files].map((file) => ({
+      return Array.from(input.files ?? []).map((file) => ({
         file,
         zone: zone.value,
         quantity,
@@ -394,7 +417,7 @@ function updateUploadedModels() {
     bodyPart.className = "model-zone";
     bodyPart.textContent = `Partie : ${zone}`;
     const quantityControl = createQuantityControl(quantity, (value) => {
-      row.dataset.quantity = value;
+      row.dataset.quantity = String(value);
       updateUploadedModels();
     });
     details.append(name, bodyPart);
@@ -406,13 +429,17 @@ function updateUploadedModels() {
 
 function getModelCount() {
   const importedCount = [
-    ...photoFields.querySelectorAll('input[type="file"]'),
+    ...photoFields.querySelectorAll<HTMLInputElement>('input[type="file"]'),
   ].reduce(
-    (count, input) =>
-      count +
-      (input.files.length
-        ? Number(input.closest(".photo-row").dataset.quantity) || 1
-        : 0),
+    (count, input) => {
+      const row = input.closest<HTMLElement>(".photo-row");
+      return (
+        count +
+        (input.files?.length
+          ? Number(row?.dataset.quantity) || 1
+          : 0)
+      );
+    },
     0,
   );
   const chosenCount = chosenModels.reduce(
@@ -423,13 +450,13 @@ function getModelCount() {
 }
 
 function updateModelRequirement() {
-  const peopleInput = $("#participants");
+  const peopleInput = $<HTMLInputElement>("#participants");
   const help = $("#participants-help");
   const requirement = $("#models-requirement");
-  const submit = $("#booking-submit");
+  const submit = $<HTMLButtonElement>("#booking-submit");
   const modelCount = getModelCount();
   const peopleCount = Math.max(1, Number(peopleInput.value) || 1);
-  peopleInput.value = peopleCount;
+  peopleInput.value = String(peopleCount);
   const missing = peopleCount - modelCount;
   help.textContent = `${modelCount} modèle${modelCount > 1 ? "s" : ""} sélectionné${modelCount > 1 ? "s" : ""} pour ${peopleCount} personne${peopleCount > 1 ? "s" : ""}.`;
   submit.disabled = missing > 0;
@@ -440,18 +467,22 @@ function updateModelRequirement() {
       : "Le nombre de modèles est suffisant pour toutes les personnes.";
 }
 
-$("#participants").addEventListener("input", (e) => {
-  const value = Number(e.target.value);
-  if (value < 1) e.target.value = 1;
+$("#participants").addEventListener("input", (event) => {
+  const input = event.currentTarget as HTMLInputElement;
+  const value = Number(input.value);
+  if (value < 1) input.value = "1";
   updateModelRequirement();
 });
 
 photoFields.addEventListener("change", updateUploadedModels);
 photoFields.addEventListener("click", (e) => {
-  const removeButton = e.target.closest(".remove-photo");
+  const removeButton =
+    e.target instanceof Element ? e.target.closest(".remove-photo") : null;
   if (!removeButton) return;
   e.preventDefault();
-  removeButton.closest(".photo-row").remove();
+  const row = removeButton.closest(".photo-row");
+  if (!row) return;
+  row.remove();
   updateUploadedModels();
 });
 $("#add-photo").addEventListener("click", () => {
@@ -495,11 +526,21 @@ $("#add-photo").addEventListener("click", () => {
 updateModelRequirement();
 
 /* ---------- Formulaire → WhatsApp + page de confirmation ---------- */
-$("#booking").addEventListener("submit", (e) => {
-  e.preventDefault();
-  const f = e.target,
-    err = $("#form-error");
-  const v = (n) => f.elements[n].value.trim();
+$("#booking").addEventListener("submit", (event) => {
+  event.preventDefault();
+  const f = event.currentTarget as HTMLFormElement;
+  const err = $("#form-error");
+  const v = (name: string) => {
+    const field = f.elements.namedItem(name);
+    if (
+      field instanceof HTMLInputElement ||
+      field instanceof HTMLSelectElement ||
+      field instanceof HTMLTextAreaElement
+    ) {
+      return field.value.trim();
+    }
+    return "";
+  };
   const problems = [];
   if (!v("ville")) problems.push("une ville");
   const modelCount = getModelCount();
@@ -514,8 +555,12 @@ $("#booking").addEventListener("submit", (e) => {
   if (!/^[+\d][\d\s.()-]{7,}$/.test(v("whatsapp")))
     problems.push("un numéro WhatsApp valide");
   if (!selectedDate || !selectedSlot) problems.push("un jour et un horaire");
-  if (!f.elements.tarif.checked) problems.push("la mention sur le tarif");
-  if (!f.elements.annulation.checked)
+  const tarif = f.querySelector<HTMLInputElement>('input[name="tarif"]');
+  const annulation = f.querySelector<HTMLInputElement>(
+    'input[name="annulation"]',
+  );
+  if (!tarif?.checked) problems.push("la mention sur le tarif");
+  if (!annulation?.checked)
     problems.push("les conditions d'annulation");
   if (problems.length) {
     err.hidden = false;
@@ -525,18 +570,21 @@ $("#booking").addEventListener("submit", (e) => {
   }
   err.hidden = true;
   const niveau = selectedLevel;
-  const d = selectedDate.date;
-  const dateTxt = `${JOURS[d.getDay()]} ${d.getDate()} ${MOIS[d.getMonth()]} ${d.getFullYear()} à ${selectedSlot}`;
-  const zones = [...photoFields.querySelectorAll('select[name="zone"]')].map(
+  const bookingDate = selectedDate;
+  const bookingSlot = selectedSlot;
+  if (!bookingDate || !bookingSlot) return;
+  const d = bookingDate.date;
+  const dateTxt = `${JOURS[d.getDay()]} ${d.getDate()} ${MOIS[d.getMonth()]} ${d.getFullYear()} à ${bookingSlot}`;
+  const zones = [...photoFields.querySelectorAll<HTMLSelectElement>('select[name="zone"]')].map(
     (select) => select.value,
   );
   const msg = [
     "Bonjour Nes Henna 👋 Je souhaite réserver un rendez-vous :",
     `• Nom : ${v("prenom")} ${v("nom")}`,
     `• Créneau : ${dateTxt}`,
-    `• Lieu : ${selectedDate.lieu}`,
+    `• Lieu : ${bookingDate.lieu}`,
     `• Nombre de personnes : ${peopleCount}`,
-    `• Niveau : ${LEVEL_LABELS[niveau] || niveau} (à partir de ${SITE_CONFIG.prix[niveau]} €)`,
+    `• Niveau : ${LEVEL_LABELS[niveau]} (à partir de ${SITE_CONFIG.prix[niveau]} €)`,
     `• Parties du corps : ${zones.join(", ")}`,
     chosenModels.length
       ? `• Modèles choisis dans la galerie : ${chosenModels.map((model) => `${model.alt} x${model.quantity || 1}`).join(" | ")}`
@@ -553,8 +601,8 @@ $("#booking").addEventListener("submit", (e) => {
     <p>Merci ${escapeHtml(v("prenom"))} ! Il ne reste qu'une étape : envoyer votre demande sur WhatsApp, avec votre modèle final.</p>
     <div class="recap">
       <p>📅 <b>${dateTxt}</b></p>
-      <p>📍 ${selectedDate.lieu} <small>(adresse exacte donnée après validation)</small></p>
-      <p>✨ Niveau ${LEVEL_LABELS[niveau] || niveau} · à partir de ${SITE_CONFIG.prix[niveau]} €</p>
+      <p>📍 ${bookingDate.lieu} <small>(adresse exacte donnée après validation)</small></p>
+      <p>✨ Niveau ${LEVEL_LABELS[niveau]} · à partir de ${SITE_CONFIG.prix[niveau]} €</p>
       <p>⏱ Durée estimée : ${SITE_CONFIG.duree[niveau]} min</p>
     </div>
     <p><b>Prochaine étape :</b> envoyez le message puis votre photo de modèle. Je vous réponds avec le devis et je valide le créneau.</p>
@@ -581,7 +629,7 @@ const TEXTES = {
     <p>Les informations saisies dans le formulaire (prénom, nom, numéro WhatsApp, e-mail, commentaire) servent uniquement à organiser votre rendez-vous. Elles sont transmises via WhatsApp et ne sont pas revendues.</p>
     <p>Vous pouvez demander la suppression de vos données à tout moment en écrivant à [e-mail à compléter].</p>`,
 };
-function openModal(html) {
+function openModal(html: string) {
   $("#modal-body").innerHTML = html;
   $("#modal").hidden = false;
 }
@@ -590,7 +638,7 @@ function closeModal() {
 }
 $(".modal-close").addEventListener("click", closeModal);
 $("#modal").addEventListener("click", (e) => {
-  if (e.target.id === "modal") closeModal();
+  if (e.target instanceof HTMLElement && e.target.id === "modal") closeModal();
 });
 addEventListener("keydown", (e) => {
   if (e.key === "Escape") {
@@ -601,15 +649,20 @@ addEventListener("keydown", (e) => {
 $$("[data-modal]").forEach((a) =>
   a.addEventListener("click", (e) => {
     e.preventDefault();
-    openModal(TEXTES[a.dataset.modal]);
+    const modalName = a.dataset.modal as keyof typeof TEXTES;
+    openModal(TEXTES[modalName]);
   }),
 );
-function escapeHtml(s) {
+function escapeHtml(s: string): string {
+  const escapedCharacters: Record<string, string> = {
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+  };
   return s.replace(
     /[&<>"']/g,
-    (c) =>
-      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
-        c
-      ],
+    (character) => escapedCharacters[character],
   );
 }

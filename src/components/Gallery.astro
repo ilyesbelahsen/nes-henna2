@@ -1,0 +1,33 @@
+---
+import { GALLERY_PHOTOS, LEVEL_LABELS } from "../data/site";
+---
+<section id="realisations" class="section">
+        <div class="container">
+          <p class="eyebrow reveal">Galerie</p>
+          <h2 class="reveal">Nos plus belles réalisations</h2>
+          <p class="section-lead reveal">
+            Un clic sur un motif pour l'agrandir. Un coup de cœur ? Vous pourrez
+            le choisir comme modèle au moment de réserver.
+          </p>
+
+          <div
+            class="filters reveal"
+            role="tablist"
+            aria-label="Filtrer les réalisations"
+          >
+            <button class="chip active" data-filter="all">Tout</button>
+            <button class="chip" data-filter="simple">Simple</button>
+            <button class="chip" data-filter="moyen">Moyen</button>
+            <button class="chip" data-filter="difficile">Difficile</button>
+          </div>
+
+          <div class="gallery" id="gallery">
+            {GALLERY_PHOTOS.map((photo, index) => (
+              <div class="g-item reveal" data-niveau={photo.niveau} data-index={index} style={`--d:${(index % 4) * 0.07}s`}>
+                <img src={photo.src} alt={photo.alt} loading="lazy" decoding="async" />
+                <span class="tag">{LEVEL_LABELS[photo.niveau]}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>

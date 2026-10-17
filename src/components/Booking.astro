@@ -1,0 +1,196 @@
+<section id="reserver" class="section tint">
+        <div class="container narrow">
+          <p class="eyebrow reveal">Réservation</p>
+          <h2 class="reveal">Réservez votre créneau</h2>
+          <p class="section-lead reveal">
+            Remplissez la demande : elle sera envoyée sur WhatsApp et je la
+            valide avec vous.
+          </p>
+
+          <form id="booking" class="booking reveal" novalidate>
+            <fieldset>
+              <legend>1 · Date et lieu</legend>
+              <div class="field">
+                <span>Ville</span>
+                <input id="ville" name="ville" type="hidden" required />
+                <div
+                  class="cities"
+                  id="villes"
+                  role="listbox"
+                  aria-label="Choisir une ville"
+                ></div>
+              </div>
+              <div
+                class="days"
+                id="days"
+                hidden
+                role="listbox"
+                aria-label="Choisir un jour"
+              ></div>
+              <div
+                class="slots"
+                id="slots"
+                hidden
+                role="listbox"
+                aria-label="Choisir un horaire"
+              ></div>
+              <p class="place" id="place-info" aria-live="polite">
+                Choisissez une ville pour voir les jours disponibles.
+              </p>
+              <p class="fine">
+                L'adresse exacte est communiquée uniquement après validation du
+                rendez-vous.
+              </p>
+            </fieldset>
+
+            <fieldset>
+              <legend>2 · Vos informations</legend>
+              <div class="grid2">
+                <label class="field"
+                  >Prénom<input
+                    name="prenom"
+                    type="text"
+                    autocomplete="given-name"
+                    required
+                /></label>
+                <label class="field"
+                  >Nom<input
+                    name="nom"
+                    type="text"
+                    autocomplete="family-name"
+                    required
+                /></label>
+              </div>
+              <label class="field"
+                >Numéro WhatsApp<input
+                  name="whatsapp"
+                  type="tel"
+                  inputmode="tel"
+                  autocomplete="tel"
+                  placeholder="06 12 34 56 78"
+                  required
+              /></label>
+              <label class="field"
+                >E-mail <span class="opt">(facultatif)</span
+                ><input name="email" type="email" autocomplete="email"
+              /></label>
+            </fieldset>
+
+            <div class="people-choice">
+              <label class="field" for="participants"
+                >Nombre de personnes
+                <input
+                  id="participants"
+                  name="participants"
+                  type="number"
+                  min="1"
+                  step="1"
+                  value="1"
+                  required
+                />
+              </label>
+              <p id="participants-help" class="fine">
+                Indiquez le nombre de personnes qui viendront au rendez-vous.
+              </p>
+              <p
+                id="models-requirement"
+                class="models-requirement"
+                role="alert"
+              ></p>
+            </div>
+
+            <fieldset>
+              <legend>3 · Votre modèle</legend>
+              <div class="model-choice upload-choice">
+                <h3>1. Ajouter un modèle en photo</h3>
+                <div id="photo-fields">
+                  <div class="photo-row">
+                    <label class="field"
+                      >Photo du modèle
+                      <input
+                        name="photo"
+                        id="photo"
+                        type="file"
+                        accept="image/*,.heic,.heif"
+                      />
+                    </label>
+                    <label class="field"
+                      >Partie du corps{" "}
+                      <select name="zone">
+                        <option>Main (dos)</option>
+                        <option>Paume</option>
+                        <option>Les deux mains</option>
+                        <option>Avant-bras</option>
+                        <option>Pied</option>
+                        <option>Autre</option>
+                      </select>
+                    </label>
+                  </div>
+                </div>
+                <button type="button" class="btn-link inline" id="add-photo">
+                  + Ajouter un autre modèle
+                </button>
+                <div id="uploaded-models" class="uploaded-models" hidden>
+                  <strong
+                    >Modèles importés{" "}
+                    <span id="uploaded-count">(0)</span></strong
+                  >
+                  <div id="uploaded-list" class="uploaded-list"></div>
+                </div>
+              </div>
+              <div class="model-choice gallery-choice">
+                <h3>2. Choisir un modèle existant</h3>
+                <p class="fine gallery-hint">
+                  Parcourez la galerie pour sélectionner un motif :{" "}
+                  <button
+                    type="button"
+                    class="btn-link inline"
+                    id="pick-from-gallery"
+                  >
+                    Voir la galerie
+                  </button>
+                </p>
+                <div id="chosen-model" class="chosen" hidden>
+                  <strong
+                    >Modèles choisis dans la galerie{" "}
+                    <span id="chosen-count">(0)</span></strong
+                  >
+                  <div id="chosen-list" class="chosen-list"></div>
+                </div>
+              </div>
+              <label class="field"
+                >Commentaire <span class="opt">(facultatif)</span
+                ><textarea
+                  name="commentaire"
+                  rows="3"
+                  placeholder="Occasion, tenue, couleur de la peau, allergies…"
+                ></textarea>
+              </label>
+            </fieldset>
+
+            <label class="check"
+              ><input type="checkbox" name="tarif" required />
+              <span
+                >J'ai compris que le tarif final est confirmé après envoi du
+                modèle définitif.</span
+              ></label
+            >
+            <label class="check"
+              ><input type="checkbox" name="annulation" required />
+              <span
+                >J'ai lu les{" "}
+                <a href="#" data-modal="cgv">conditions d'annulation</a>.</span
+              ></label
+            >
+
+            <p class="error" id="form-error" role="alert" hidden></p>
+            <button
+              class="btn btn-primary btn-lg btn-block"
+              id="booking-submit"
+              type="submit"
+            >
+              Envoyer ma demande
+            </button>
+          </form>
+        </div>
+      </section>

@@ -1,5 +1,23 @@
-/* Donnees modifiables du site Nes Henna. */
-const SITE_CONFIG = Object.freeze({
+export type Level = "simple" | "moyen" | "difficile";
+
+export interface SiteConfig {
+  whatsapp: string;
+  instagram: string;
+  tiktok: string;
+  prix: Readonly<Record<Level, number>>;
+  duree: Readonly<Record<Level, number>>;
+  villes: readonly string[];
+  horaires: readonly string[];
+  joursAffiches: number;
+}
+
+export interface GalleryPhoto {
+  src: string;
+  niveau: Level;
+  alt: string;
+}
+
+export const SITE_CONFIG: Readonly<SiteConfig> = Object.freeze({
   whatsapp: "33783365435",
   instagram: "https://www.instagram.com/",
   tiktok: "https://www.tiktok.com/",
@@ -17,10 +35,10 @@ const SITE_CONFIG = Object.freeze({
   joursAffiches: 14,
 });
 
-const buildPhotoUrl = (id) =>
+const buildPhotoUrl = (id: string) =>
   `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&q=70&w=700`;
 
-const GALLERY_PHOTOS = Object.freeze([
+export const GALLERY_PHOTOS: readonly GalleryPhoto[] = Object.freeze([
   {
     src: buildPhotoUrl("1572969147844-920fff94e326"),
     niveau: "moyen",
@@ -83,7 +101,7 @@ const GALLERY_PHOTOS = Object.freeze([
   },
 ]);
 
-const LEVEL_LABELS = Object.freeze({
+export const LEVEL_LABELS: Readonly<Record<Level, string>> = Object.freeze({
   simple: "Simple",
   moyen: "Moyen",
   difficile: "Difficile",
