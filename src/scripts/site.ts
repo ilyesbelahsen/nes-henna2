@@ -668,6 +668,30 @@ async function readApiResponse<T>(response: Response): Promise<T> {
   }
 }
 
+function resetBookingForm(form: HTMLFormElement) {
+  form.reset();
+  selectedDate = null;
+  selectedSlot = null;
+  selectedLevel = "simple";
+  chosenModels = [];
+  slotRequest += 1;
+  $$(".city").forEach((button) => {
+    button.classList.remove("sel");
+    button.setAttribute("aria-selected", "false");
+  });
+  daysEl.replaceChildren();
+  daysEl.hidden = true;
+  slotsEl.replaceChildren();
+  slotsEl.hidden = true;
+  placeEl.textContent = "Choisissez une ville pour voir les jours disponibles.";
+  const rows = $$(".photo-row", photoFields);
+  rows.slice(1).forEach((row) => row.remove());
+  if (rows[0]) rows[0].dataset.quantity = "1";
+  photoCount = 1;
+  renderChosenModels();
+  updateUploadedModels();
+}
+
 $("#booking").addEventListener("submit", async (event) => {
   event.preventDefault();
   const f = event.currentTarget as HTMLFormElement;
@@ -801,7 +825,8 @@ $("#booking").addEventListener("submit", async (event) => {
       `• Lieu : ${bookingDate.lieu}`,
       "Je vous contacte pour confirmer le rendez-vous.",
     ].join("\n");
-    openModal(`
+    const confirmation = $("#booking-confirmation");
+    confirmation.innerHTML = `
       <h3>Demande enregistrée 🎉</h3>
       <p>Merci ${escapeHtml(v("prenom"))} ! Votre demande a bien été enregistrée. Nes Henna vous recontactera pour confirmer le rendez-vous.</p>
       <div class="recap">
@@ -814,7 +839,12 @@ $("#booking").addEventListener("submit", async (event) => {
         result.emailSent
           ? "<p>Un accusé de réception vous a été envoyé par e-mail.</p>"
           : `<p>Le serveur n'a pas pu envoyer l'e-mail de réception. Vous pouvez contacter Nes Henna sur WhatsApp pour confirmer votre demande.</p><a class="btn btn-primary btn-block btn-lg" target="_blank" rel="noopener" href="${waLink(whatsappMessage)}">💬 Contacter sur WhatsApp</a>`
-      }`);
+      }`;
+    resetBookingForm(f);
+    f.hidden = true;
+    confirmation.hidden = false;
+    confirmation.focus();
+    confirmation.scrollIntoView({ behavior: "smooth", block: "center" });
   } catch (error) {
     err.hidden = false;
     err.textContent =
