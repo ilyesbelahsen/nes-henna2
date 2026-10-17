@@ -31,13 +31,25 @@ const structuredData = {
 ---
 
 <!doctype html>
-<html lang="fr">
+<html lang="fr" data-photos="blurred">
   <head>
     <meta charset="UTF-8" />
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1, viewport-fit=cover"
     />
+    <script is:inline>
+      try {
+        const choice = localStorage.getItem("nas-photos-choice");
+        if (choice === "visible" || choice === "blurred") {
+          document.documentElement.dataset.photos = choice;
+          document.documentElement.dataset.photosChoice = choice;
+        }
+      } catch (error) {
+        document.documentElement.dataset.photosStorage = "unavailable";
+        console.warn("Impossible de lire le choix d’affichage des photos.", error);
+      }
+    </script>
     <title>{title}</title>
     <meta name="description" content={description} />
     <meta name="theme-color" content="#D73463" />
@@ -63,6 +75,11 @@ const structuredData = {
   </head>
   <body>
     <slot />
+    <noscript>
+      <p class="photo-gate-noscript">
+        Les photos restent floutées lorsque JavaScript est désactivé.
+      </p>
+    </noscript>
     <script>
       import "../scripts/main.ts";
     </script>

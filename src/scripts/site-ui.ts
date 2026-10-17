@@ -11,7 +11,7 @@ let reduceMotion = false;
 
 export function observeReveal(element: HTMLElement) {
   if (reduceMotion) {
-    element.classList.add("in");
+    element.classList.add("is-visible");
     return;
   }
   if (!revealObserver)
@@ -34,28 +34,24 @@ function initializeSiteDetails() {
 
 function initializeRevealAnimations() {
   reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const elements = $$(".reveal:not(.is-visible)");
+  if (reduceMotion) {
+    elements.forEach((element) => element.classList.add("is-visible"));
+    return;
+  }
+
   revealObserver = new IntersectionObserver(
-    (entries) =>
+    (entries, observer) =>
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
-          entry.target.classList.add("in");
-          revealObserver?.unobserve(entry.target);
+          entry.target.classList.add("is-visible");
+          observer.unobserve(entry.target);
         }
       }),
-    { threshold: 0.12, rootMargin: "0px 0px -40px 0px" },
+    { threshold: 0.15 },
   );
 
-  $$(".reveal:not(.in)").forEach((element, index) => {
-    if (reduceMotion) {
-      element.classList.add("in");
-      return;
-    }
-    if (!element.style.getPropertyValue("--d"))
-      element.style.setProperty("--d", (index % 3) * 0.08 + "s");
-    observeReveal(element);
-  });
-
-  setTimeout(() => $$(".reveal").forEach((element) => element.classList.add("in")), 2500);
+  elements.forEach(observeReveal);
 }
 
 function initializeHeader() {
@@ -108,7 +104,7 @@ const TEXTES = {
       <li>Un retard de plus de 15 minutes peut réduire la durée de la séance ou entraîner l'annulation.</li>
     </ul>`,
   privacy: `<h3>Politique de confidentialité</h3>
-    <p>Ce site ne dépose aucun cookie publicitaire ni de suivi. Il mémorise uniquement, sur votre appareil, votre confirmation d'accès à la galerie.</p>
+    <p>Ce site ne dépose aucun cookie publicitaire ni de suivi. Il mémorise uniquement, sur votre appareil, votre préférence d'affichage de la galerie (photos visibles ou floutées).</p>
     <p>Les informations et photos envoyées dans le formulaire servent uniquement à traiter votre demande de rendez-vous. Elles sont transmises au serveur de réservation, à Google Calendar et, si l'envoi d'e-mails est configuré, au service de messagerie. Elles ne sont pas revendues.</p>
     <p>Vous pouvez demander la suppression de vos données à tout moment en écrivant à [e-mail à compléter].</p>`,
 };

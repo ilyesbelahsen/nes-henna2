@@ -23,8 +23,8 @@ import { GALLERY_PHOTOS, LEVEL_LABELS } from "../data/site";
 
           <div class="gallery" id="gallery">
             {GALLERY_PHOTOS.map((photo, index) => (
-              <div class="g-item reveal" data-niveau={photo.niveau} data-index={index} style={`--d:${(index % 4) * 0.07}s`}>
-                <img src={photo.src} alt={photo.alt} loading="lazy" decoding="async" />
+              <div class="g-item reveal" data-niveau={photo.niveau} data-index={index}>
+                <img class="gated-photo" src={photo.src} alt={photo.alt} loading="lazy" decoding="async" />
                 <span class="tag">{LEVEL_LABELS[photo.niveau]}</span>
               </div>
             ))}

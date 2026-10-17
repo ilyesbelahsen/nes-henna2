@@ -1,0 +1,51 @@
+<section
+  id="photo-gate"
+  class="photo-gate"
+  role="region"
+  aria-labelledby="photo-gate-title"
+  hidden
+>
+  <div class="photo-gate__panel">
+    <h2 id="photo-gate-title">Photos floutées</h2>
+    <p>
+      Par respect des principes de pudeur liés à certaines convictions
+      religieuses, les photos sont floutées par défaut.
+    </p>
+    <p class="photo-gate__warning" id="photo-gate-warning" role="status" hidden>
+    </p>
+
+    <div>
+      <label class="photo-gate__check" for="photo-gate-confirmation">
+        <input id="photo-gate-confirmation" type="checkbox" />
+        Je confirme être une femme et souhaite afficher les photos.
+      </label>
+      <div class="photo-gate__actions">
+        <button
+          class="photo-gate__primary"
+          id="photo-gate-show-photos"
+          type="button"
+          disabled
+        >
+          Afficher les photos
+        </button>
+        <button class="photo-gate__decline" type="button" data-photo-gate-decline>
+          Garder les photos floutées
+        </button>
+      </div>
+    </div>
+
+    <div class="photo-gate__footer">
+      <small>Flou visuel uniquement.</small>
+      <small>Vous pourrez toujours modifier votre choix en bas de page.</small>
+      <a class="photo-gate__privacy" href="#" data-modal="privacy">
+        Confidentialité
+      </a>
+    </div>
+  </div>
+</section>
+<p
+  id="photo-gate-status"
+  class="photo-gate-status"
+  role="status"
+  hidden
+></p>

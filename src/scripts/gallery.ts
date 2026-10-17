@@ -43,6 +43,7 @@ export function initializeGallery(
       const item = document.createElement("div");
       item.className = "chosen-item";
       const image = document.createElement("img");
+      image.className = "gated-photo";
       image.src = model.src;
       image.alt = model.alt;
       const name = document.createElement("span");
