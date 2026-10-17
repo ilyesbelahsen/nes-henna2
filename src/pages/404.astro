@@ -1,0 +1,29 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+const baseUrl = import.meta.env.BASE_URL.endsWith("/")
+  ? import.meta.env.BASE_URL
+  : `${import.meta.env.BASE_URL}/`;
+---
+
+<BaseLayout
+  title="Page introuvable · Nes Henna"
+  description="La page demandée n’existe pas. Retrouvez les prestations de henné Nes Henna."
+>
+  <main class="section">
+    <div class="container narrow">
+      <p class="eyebrow">Erreur 404</p>
+      <h1>Cette page n’existe pas</h1>
+      <p class="section-lead">Le lien est peut-être incorrect ou la page a été déplacée.</p>
+      <a class="btn btn-primary" href={baseUrl}>Retour à l’accueil</a>
+    </div>
+  </main>
+</BaseLayout>
+
+<style>
+  h1 {
+    margin-bottom: 1rem;
+    color: var(--crimson);
+    font: 600 clamp(2rem, 6vw, 3rem) / 1.15 "Fredoka", sans-serif;
+  }
+</style>
