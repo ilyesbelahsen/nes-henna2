@@ -14,6 +14,7 @@ import {
 import {
   createCalendarEvent,
   freeSlots,
+  getAvailabilityCalendarId,
   parseDay,
   withLock,
 } from "./calendar.js";
@@ -60,8 +61,11 @@ app.get(
   async (req, res) => {
     const day = parseDay(req.query.date);
     if (!day) return res.status(400).json({ error: "date_invalide" });
+    const ville = typeof req.query.ville === "string" ? req.query.ville : "";
+    if (!getAvailabilityCalendarId(ville))
+      return res.status(400).json({ error: "ville_invalide" });
     try {
-      return res.json({ slots: await freeSlots(day) });
+      return res.json({ slots: await freeSlots(day, ville) });
     } catch (error) {
       console.error("slots:", error.message);
       return res.status(502).json({ error: "calendrier_indisponible" });
@@ -91,7 +95,7 @@ app.post(
     if (!booking) return res.status(400).json({ error: "donnees_invalides" });
     try {
       const start = await withLock(async () =>
-        (await freeSlots(booking.day)).includes(booking.creneau)
+        (await freeSlots(booking.day, booking.ville)).includes(booking.creneau)
           ? createCalendarEvent(booking, files)
           : null,
       );

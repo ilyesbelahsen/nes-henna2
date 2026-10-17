@@ -1,16 +1,22 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { DateTime } from "luxon";
 
 process.env.GOOGLE_CLIENT_EMAIL ??= "booking-tests@example.iam.gserviceaccount.com";
 process.env.GOOGLE_PRIVATE_KEY ??= "test-key";
 process.env.CALENDAR_ID ??= "booking-calendar";
-process.env.AVAILABILITY_CALENDAR_ID ??= "availability-calendar";
+process.env.TOULOUSE_AVAILABILITY_CALENDAR_ID = "toulouse-availability";
+process.env.PARIS_AVAILABILITY_CALENDAR_ID = "paris-availability";
+process.env.PERPIGNAN_AVAILABILITY_CALENDAR_ID = "perpignan-availability";
 process.env.ALLOWED_ORIGIN ??= "http://localhost:4321";
 process.env.RESEND_API_KEY = "";
 
 const { readBooking } = await import("../booking.js");
 const { buildBookingEmailContent } = await import("../mail-content.js");
 const { createMailSender } = await import("../mailer.js");
+const { calendar } = await import("../config.js");
+const { freeSlots, getAvailabilityCalendarId, parseDay } =
+  await import("../calendar.js");
 
 const validRequest = () => ({
   nom: "Martin",
@@ -47,6 +53,7 @@ test("rejects invalid contact details, missing consent, and insufficient models"
     null,
   );
   assert.equal(readBooking({ ...validRequest(), nom: "Martin\nBcc:x" }), null);
+  assert.equal(readBooking({ ...validRequest(), ville: "Lyon" }), null);
   assert.equal(
     readBooking({
       ...validRequest(),
@@ -61,6 +68,46 @@ test("rejects invalid contact details, missing consent, and insufficient models"
     }),
     null,
   );
+});
+
+test("loads availability from the calendar selected by city", async (t) => {
+  const requestedCalendars = [];
+  const testDay = DateTime.now().setZone("Europe/Paris").plus({ days: 7 }).startOf("day");
+  t.mock.method(calendar.events, "list", async ({ calendarId }) => {
+    requestedCalendars.push(calendarId);
+    return {
+      data: {
+        items: [
+          {
+            start: { dateTime: testDay.set({ hour: 10 }).toISO() },
+            end: { dateTime: testDay.set({ hour: 12 }).toISO() },
+          },
+        ],
+      },
+    };
+  });
+  t.mock.method(calendar.freebusy, "query", async () => ({
+    data: { calendars: { "booking-calendar": { busy: [] } } },
+  }));
+
+  for (const [ville, calendarId] of [
+    ["Toulouse", "toulouse-availability"],
+    ["Paris", "paris-availability"],
+    ["Perpignan", "perpignan-availability"],
+  ]) {
+    assert.equal(getAvailabilityCalendarId(ville), calendarId);
+    assert.deepEqual(
+      await freeSlots(parseDay(testDay.toISODate()), ville),
+      ["10:00", "11:00"],
+    );
+  }
+
+  assert.deepEqual(requestedCalendars, [
+    "toulouse-availability",
+    "paris-availability",
+    "perpignan-availability",
+  ]);
+  assert.equal(getAvailabilityCalendarId("Lyon"), null);
 });
 
 test("rejects malformed or non-object request bodies", () => {

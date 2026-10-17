@@ -370,7 +370,9 @@ async function selectDay(button: HTMLButtonElement, date: Date, lieu: string) {
   placeEl.textContent = `📍 ${lieu} – recherche des disponibilités`;
   try {
     const response = await fetch(
-      bookingEndpoint(`/slots?date=${encodeURIComponent(dateToIso(date))}`),
+      bookingEndpoint(
+        `/slots?date=${encodeURIComponent(dateToIso(date))}&ville=${encodeURIComponent(lieu)}`,
+      ),
     );
     const body = await readApiResponse<{ error?: string; slots?: unknown }>(
       response,
@@ -593,6 +595,7 @@ const API_ERROR_MESSAGES: Record<string, string> = {
   photo_trop_volumineuse: "Chaque photo doit faire 10 Mo maximum.",
   fichiers_trop_volumineux:
     "Le poids total des photos ne doit pas dépasser 28 Mo.",
+  ville_invalide: "La ville choisie n'est pas valide. Sélectionnez une ville proposée.",
   origine_non_autorisee:
     "Le serveur de réservation refuse cette origine. Contactez Nes Henna.",
   limite_disponibilites:

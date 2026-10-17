@@ -1,14 +1,26 @@
 import { DateTime } from "luxon";
 import {
-  AVAILABILITY_CALENDAR_ID,
   CALENDAR_ID,
   DATE_PATTERN,
   MAX_DAYS_AHEAD,
   MIN_NOTICE_HOURS,
+  PARIS_AVAILABILITY_CALENDAR_ID,
+  PERPIGNAN_AVAILABILITY_CALENDAR_ID,
   TIMEZONE,
+  TOULOUSE_AVAILABILITY_CALENDAR_ID,
   calendar,
   slotMinutes,
 } from "./config.js";
+
+const availabilityCalendars = new Map([
+  ["Toulouse", TOULOUSE_AVAILABILITY_CALENDAR_ID],
+  ["Paris", PARIS_AVAILABILITY_CALENDAR_ID],
+  ["Perpignan", PERPIGNAN_AVAILABILITY_CALENDAR_ID],
+]);
+
+export function getAvailabilityCalendarId(ville) {
+  return availabilityCalendars.get(ville) ?? null;
+}
 
 export function parseDay(value) {
   if (!DATE_PATTERN.test(value || "")) return null;
@@ -38,9 +50,9 @@ async function getBusy(from, to) {
   }));
 }
 
-async function getWindows(day) {
+async function getWindows(day, calendarId) {
   const { data } = await calendar.events.list({
-    calendarId: AVAILABILITY_CALENDAR_ID,
+    calendarId,
     timeMin: day.startOf("day").toUTC().toISO(),
     timeMax: day.endOf("day").toUTC().toISO(),
     singleEvents: true,
@@ -65,7 +77,10 @@ async function getWindows(day) {
     }));
 }
 
-export async function freeSlots(day) {
+export async function freeSlots(day, ville) {
+  const availabilityCalendarId = getAvailabilityCalendarId(ville);
+  if (!availabilityCalendarId) throw new Error("ville_invalide");
+
   const now = DateTime.now().setZone(TIMEZONE);
   if (
     day < now.startOf("day") ||
@@ -74,7 +89,7 @@ export async function freeSlots(day) {
     return [];
   const earliest = now.plus({ hours: Number(MIN_NOTICE_HOURS) });
   const found = new Map();
-  for (const window of await getWindows(day)) {
+  for (const window of await getWindows(day, availabilityCalendarId)) {
     for (
       let time = window.start;
       time.plus({ minutes: slotMinutes }) <= window.end;

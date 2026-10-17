@@ -1,5 +1,5 @@
 import { TIME_PATTERN } from "./config.js";
-import { parseDay } from "./calendar.js";
+import { getAvailabilityCalendarId, parseDay } from "./calendar.js";
 
 export function readBooking(body) {
   if (!body || typeof body !== "object" || Array.isArray(body)) return null;
@@ -37,9 +37,7 @@ export function readBooking(body) {
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(booking.email) &&
     booking.email.length <= 120 &&
     TIME_PATTERN.test(booking.creneau) &&
-    booking.ville.length > 0 &&
-    booking.ville.length <= 100 &&
-    isSingleLine(booking.ville) &&
+    getAvailabilityCalendarId(booking.ville) !== null &&
     ["simple", "moyen", "difficile"].includes(booking.niveau) &&
     booking.commentaire.length <= 2000 &&
     Number.isInteger(participants) &&
