@@ -13,6 +13,12 @@ export default defineConfig({
   trailingSlash: "never",
   integrations: [sitemap()],
   vite: {
+    server: {
+      proxy: {
+        "/slots": process.env.BOOKING_SERVER_URL || "http://localhost:3000",
+        "/book": process.env.BOOKING_SERVER_URL || "http://localhost:3000",
+      },
+    },
     resolve: {
       alias: {
         "@components": `${root}src/components`,

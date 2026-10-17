@@ -663,6 +663,14 @@ h3 {
   padding: 1.4rem;
   box-shadow: var(--shadow-lg);
 }
+.booking-trap {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
 .booking fieldset {
   border: 0;
   margin-bottom: 1.6rem;

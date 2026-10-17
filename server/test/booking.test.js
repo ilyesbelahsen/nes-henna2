@@ -1,0 +1,106 @@
+import assert from "node:assert/strict";
+import { test } from "node:test";
+
+process.env.GOOGLE_CLIENT_EMAIL ??= "booking-tests@example.iam.gserviceaccount.com";
+process.env.GOOGLE_PRIVATE_KEY ??= "test-key";
+process.env.CALENDAR_ID ??= "booking-calendar";
+process.env.AVAILABILITY_CALENDAR_ID ??= "availability-calendar";
+process.env.ALLOWED_ORIGIN ??= "http://localhost:4321";
+
+const { readBooking } = await import("../booking.js");
+const { buildBookingEmailContent } = await import("../mail-content.js");
+
+const validRequest = () => ({
+  nom: "Martin",
+  prenom: "Camille",
+  telephone: "0612345678",
+  email: "camille@example.com",
+  date: "2030-05-20",
+  creneau: "10:00",
+  ville: "Paris",
+  niveau: "simple",
+  commentaire: "",
+  participants: "2",
+  models: JSON.stringify([
+    { kind: "gallery", label: "Motif floral", zone: "Galerie", quantity: 1 },
+    { kind: "upload", label: "modele.png", zone: "Paume", quantity: 1 },
+  ]),
+  tarifAccepted: "true",
+  cancellationAccepted: "true",
+});
+
+test("accepts a complete booking and parses its calendar day", () => {
+  const booking = readBooking(validRequest());
+
+  assert.equal(booking?.date, "2030-05-20");
+  assert.equal(booking?.participants, 2);
+  assert.equal(booking?.models.length, 2);
+  assert.equal(booking?.day.isValid, true);
+});
+
+test("rejects invalid contact details, missing consent, and insufficient models", () => {
+  assert.equal(readBooking({ ...validRequest(), email: "not-an-email" }), null);
+  assert.equal(
+    readBooking({ ...validRequest(), cancellationAccepted: "false" }),
+    null,
+  );
+  assert.equal(readBooking({ ...validRequest(), nom: "Martin\nBcc:x" }), null);
+  assert.equal(
+    readBooking({
+      ...validRequest(),
+      models: JSON.stringify([
+        {
+          kind: "gallery",
+          label: "Motif floral",
+          zone: "Galerie",
+          quantity: 1,
+        },
+      ]),
+    }),
+    null,
+  );
+});
+
+test("rejects malformed or non-object request bodies", () => {
+  assert.equal(readBooking(null), null);
+  assert.equal(readBooking([]), null);
+  assert.equal(readBooking({ ...validRequest(), models: "{" }), null);
+});
+
+test("includes uploaded photo body zones and gallery models in the email", () => {
+  const booking = readBooking(validRequest());
+  const { text, html } = buildBookingEmailContent(
+    booking,
+    "mardi 20 mai 2030 à 10:00",
+    [{ originalname: "modele-main.png" }],
+  );
+
+  assert.match(text, /Photo importée : modele\.png/);
+  assert.match(text, /Partie du corps : Paume/);
+  assert.match(text, /fichier joint : modele-main\.png/);
+  assert.match(text, /Modèle de la galerie : Motif floral/);
+  assert.match(text, /Partie du corps : Galerie/);
+  assert.match(html, /Partie du corps : Paume/);
+  assert.match(html, /Motif floral/);
+});
+
+test("escapes email HTML and rejects mismatched model photos", () => {
+  const booking = readBooking({
+    ...validRequest(),
+    models: JSON.stringify([
+      { kind: "gallery", label: "<script>", zone: "Galerie", quantity: 2 },
+    ]),
+  });
+  const content = buildBookingEmailContent(
+    { ...booking, commentaire: "<img src=x>" },
+    "mardi 20 mai 2030 à 10:00",
+    [],
+  );
+
+  assert.match(content.html, /&lt;script&gt;/);
+  assert.match(content.html, /&lt;img src=x&gt;/);
+  assert.throws(
+    () => buildBookingEmailContent(booking, "date", [{ originalname: "extra.png" }]),
+    /ne correspondent pas/,
+  );
+});

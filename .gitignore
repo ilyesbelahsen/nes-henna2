@@ -1,6 +1,12 @@
 node_modules/
 dist/
 .astro/
+.env
+.env.*
+!.env.example
+server/.env
+server/.env.*
+!server/.env.example
 playwright-report/
 test-results/
 .DS_Store

@@ -3,11 +3,18 @@
           <p class="eyebrow reveal">Réservation</p>
           <h2 class="reveal">Réservez votre créneau</h2>
           <p class="section-lead reveal">
-            Remplissez la demande : elle sera envoyée sur WhatsApp et je la
-            valide avec vous.
+            Choisissez un créneau disponible et envoyez votre demande. Nes
+            Henna vous recontactera pour la confirmer.
           </p>
 
           <form id="booking" class="booking reveal" novalidate>
+            <label class="booking-trap" aria-hidden="true"
+              >Ne pas remplir<input
+                name="website"
+                type="text"
+                tabindex="-1"
+                autocomplete="off"
+            /></label>
             <fieldset>
               <legend>1 · Date et lieu</legend>
               <div class="field">
@@ -51,6 +58,7 @@
                     name="prenom"
                     type="text"
                     autocomplete="given-name"
+                    maxlength="80"
                     required
                 /></label>
                 <label class="field"
@@ -58,21 +66,27 @@
                     name="nom"
                     type="text"
                     autocomplete="family-name"
+                    maxlength="80"
                     required
                 /></label>
               </div>
               <label class="field"
                 >Numéro WhatsApp<input
-                  name="whatsapp"
+                  name="telephone"
                   type="tel"
                   inputmode="tel"
                   autocomplete="tel"
                   placeholder="06 12 34 56 78"
+                  maxlength="21"
                   required
               /></label>
               <label class="field"
-                >E-mail <span class="opt">(facultatif)</span
-                ><input name="email" type="email" autocomplete="email"
+                >E-mail<input
+                  name="email"
+                  type="email"
+                  autocomplete="email"
+                  maxlength="120"
+                  required
               /></label>
             </fieldset>
 
@@ -163,6 +177,7 @@
                 ><textarea
                   name="commentaire"
                   rows="3"
+                  maxlength="2000"
                   placeholder="Occasion, tenue, couleur de la peau, allergies…"
                 ></textarea>
               </label>
@@ -183,7 +198,7 @@
               ></label
             >
 
-            <p class="error" id="form-error" role="alert" hidden></p>
+            <p class="error" id="form-error" role="alert" aria-live="polite" hidden></p>
             <button
               class="btn btn-primary btn-lg btn-block"
               id="booking-submit"

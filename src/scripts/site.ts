@@ -40,6 +40,17 @@ let chosenModels: ChosenModel[] = [];
 let selectedLevel: Level = "simple";
 let selectedDate: SelectedDate | null = null;
 let selectedSlot: string | null = null;
+let slotRequest = 0;
+let isSubmitting = false;
+const bookingApiBase =
+  import.meta.env.PUBLIC_BOOKING_API_URL?.replace(/\/+$/, "") ?? "";
+
+function bookingEndpoint(path: string) {
+  if (import.meta.env.PROD && !bookingApiBase) {
+    throw new Error("Le serveur de réservation n'est pas configuré.");
+  }
+  return `${bookingApiBase}${path}`;
+}
 
 // Déclaration uniquement typée : conserve le ReferenceError préexistant au clic de suppression.
 declare const index: number;
@@ -277,7 +288,7 @@ initializeReviewsMarquee();
 
 initializeGallery();
 
-/* ---------- Calendrier de démonstration ---------- */
+/* ---------- Calendrier connecté au serveur ---------- */
 const JOURS = ["dim", "lun", "mar", "mer", "jeu", "ven", "sam"];
 const MOIS = [
   "janv.",
@@ -293,11 +304,6 @@ const MOIS = [
   "nov.",
   "déc.",
 ];
-// Créneau « déjà pris » simulé, de façon stable (à remplacer par un vrai agenda)
-function isTaken(d: Date, h: string) {
-  const n = d.getDate() * 7 + parseInt(h, 10) * 3;
-  return n % 5 === 0;
-}
 const daysEl = $("#days"),
   slotsEl = $("#slots"),
   placeEl = $("#place-info"),
@@ -319,23 +325,20 @@ SITE_CONFIG.villes.forEach((ville) => {
     button.setAttribute("aria-selected", "true");
     villeEl.value = ville;
     placeEl.textContent = `📍 ${ville} – choisissez un jour`;
+    slotRequest += 1;
     buildDays(ville);
   });
   villesEl.append(button);
 });
 
-function renderSlots(date: Date, lieu: string) {
+function renderSlots(date: Date, lieu: string, availableSlots: string[]) {
   slotsEl.innerHTML = "";
-  SITE_CONFIG.horaires.forEach((h) => {
+  availableSlots.forEach((h) => {
     const slot = document.createElement("button");
     slot.type = "button";
     slot.className = "slot";
     slot.textContent = h;
     slot.setAttribute("role", "option");
-    if (isTaken(date, h)) {
-      slot.classList.add("taken");
-      slot.disabled = true;
-    }
     slot.addEventListener("click", () => {
       $$(".slot").forEach((item) => item.classList.remove("sel"));
       slot.classList.add("sel");
@@ -344,22 +347,71 @@ function renderSlots(date: Date, lieu: string) {
     });
     slotsEl.append(slot);
   });
+  if (availableSlots.length === 0) {
+    placeEl.textContent = `📍 ${lieu} – aucun créneau disponible ce jour-là.`;
+  }
 }
 
-function selectDay(button: HTMLButtonElement, date: Date, lieu: string) {
+function dateToIso(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+async function selectDay(button: HTMLButtonElement, date: Date, lieu: string) {
   $$(".day").forEach((item) => item.classList.remove("sel"));
   button.classList.add("sel");
   selectedDate = { date, lieu };
   selectedSlot = null;
+  const requestId = ++slotRequest;
   slotsEl.hidden = false;
-  placeEl.textContent = `📍 ${lieu} – choisissez un horaire`;
-  renderSlots(date, lieu);
+  slotsEl.textContent = "Chargement des créneaux…";
+  placeEl.textContent = `📍 ${lieu} – recherche des disponibilités`;
+  try {
+    const response = await fetch(
+      bookingEndpoint(`/slots?date=${encodeURIComponent(dateToIso(date))}`),
+    );
+    const body = await readApiResponse<{ error?: string; slots?: unknown }>(
+      response,
+    );
+    if (!response.ok) {
+      throw new Error(
+        body.error
+          ? apiErrorMessage(body.error)
+          : `Impossible de charger les créneaux (HTTP ${response.status}).`,
+      );
+    }
+    if (
+      requestId !== slotRequest ||
+      selectedDate?.date.getTime() !== date.getTime()
+    )
+      return;
+    if (
+      !Array.isArray(body.slots) ||
+      !body.slots.every((slot) => typeof slot === "string")
+    ) {
+      throw new Error("Le serveur a renvoyé des créneaux invalides.");
+    }
+    renderSlots(date, lieu, body.slots);
+    if (body.slots.length > 0) {
+      placeEl.textContent = `📍 ${lieu} – choisissez un horaire`;
+    }
+  } catch (error) {
+    if (requestId !== slotRequest) return;
+    slotsEl.innerHTML = "";
+    placeEl.textContent =
+      error instanceof Error
+        ? error.message
+        : "Impossible de charger les disponibilités. Réessayez.";
+  }
 }
 
 function buildDays(lieu: string) {
   daysEl.innerHTML = "";
   slotsEl.innerHTML = "";
   slotsEl.hidden = true;
+  slotRequest += 1;
   daysEl.hidden = false;
   selectedDate = null;
   selectedSlot = null;
@@ -459,7 +511,7 @@ function updateModelRequirement() {
   peopleInput.value = String(peopleCount);
   const missing = peopleCount - modelCount;
   help.textContent = `${modelCount} modèle${modelCount > 1 ? "s" : ""} sélectionné${modelCount > 1 ? "s" : ""} pour ${peopleCount} personne${peopleCount > 1 ? "s" : ""}.`;
-  submit.disabled = missing > 0;
+  submit.disabled = missing > 0 || isSubmitting;
   requirement.hidden = missing <= 0;
   requirement.textContent =
     missing > 0
@@ -525,8 +577,46 @@ $("#add-photo").addEventListener("click", () => {
 });
 updateModelRequirement();
 
-/* ---------- Formulaire → WhatsApp + page de confirmation ---------- */
-$("#booking").addEventListener("submit", (event) => {
+/* ---------- Formulaire → serveur de réservation ---------- */
+const API_ERROR_MESSAGES: Record<string, string> = {
+  date_invalide: "La date choisie n'est pas valide.",
+  calendrier_indisponible:
+    "Le calendrier est momentanément indisponible. Réessayez plus tard.",
+  creneau_pris:
+    "Ce créneau vient d'être pris. Choisissez-en un autre.",
+  donnees_invalides:
+    "Certaines informations ou photos sont invalides. Vérifiez le formulaire.",
+  soumission_invalide:
+    "La demande n'a pas pu être vérifiée. Actualisez la page et réessayez.",
+  fichiers_invalides:
+    "Les photos doivent être des images valides de 10 Mo maximum chacune, avec 5 photos au plus.",
+  photo_trop_volumineuse: "Chaque photo doit faire 10 Mo maximum.",
+  origine_non_autorisee:
+    "Le serveur de réservation refuse cette origine. Contactez Nes Henna.",
+  limite_disponibilites:
+    "Trop de recherches de créneaux. Attendez une minute avant de réessayer.",
+  limite_reservations:
+    "Trop de demandes ont été envoyées. Réessayez plus tard.",
+};
+
+function apiErrorMessage(code: string) {
+  return (
+    API_ERROR_MESSAGES[code] ??
+    `Le serveur a refusé la demande : ${code.replaceAll("_", " ")}.`
+  );
+}
+
+async function readApiResponse<T>(response: Response): Promise<T> {
+  try {
+    return (await response.json()) as T;
+  } catch {
+    throw new Error(
+      `Réponse invalide du serveur de réservation (HTTP ${response.status}).`,
+    );
+  }
+}
+
+$("#booking").addEventListener("submit", async (event) => {
   event.preventDefault();
   const f = event.currentTarget as HTMLFormElement;
   const err = $("#form-error");
@@ -552,8 +642,10 @@ $("#booking").addEventListener("submit", (event) => {
       `au moins ${peopleCount} modèle${peopleCount > 1 ? "s" : ""} pour les personnes indiquées`,
     );
   if (!v("prenom") || !v("nom")) problems.push("votre prénom et votre nom");
-  if (!/^[+\d][\d\s.()-]{7,}$/.test(v("whatsapp")))
+  if (!/^[+\d][\d\s.()-]{7,}$/.test(v("telephone")))
     problems.push("un numéro WhatsApp valide");
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v("email")))
+    problems.push("une adresse e-mail valide");
   if (!selectedDate || !selectedSlot) problems.push("un jour et un horaire");
   const tarif = f.querySelector<HTMLInputElement>('input[name="tarif"]');
   const annulation = f.querySelector<HTMLInputElement>(
@@ -569,44 +661,120 @@ $("#booking").addEventListener("submit", (event) => {
     return;
   }
   err.hidden = true;
-  const niveau = selectedLevel;
   const bookingDate = selectedDate;
   const bookingSlot = selectedSlot;
   if (!bookingDate || !bookingSlot) return;
-  const d = bookingDate.date;
-  const dateTxt = `${JOURS[d.getDay()]} ${d.getDate()} ${MOIS[d.getMonth()]} ${d.getFullYear()} à ${bookingSlot}`;
-  const zones = [...photoFields.querySelectorAll<HTMLSelectElement>('select[name="zone"]')].map(
-    (select) => select.value,
+  const dateTxt = `${JOURS[bookingDate.date.getDay()]} ${bookingDate.date.getDate()} ${MOIS[bookingDate.date.getMonth()]} ${bookingDate.date.getFullYear()} à ${bookingSlot}`;
+  const photoModels = [
+    ...photoFields.querySelectorAll<HTMLElement>(".photo-row"),
+  ].flatMap((row) => {
+    const input = row.querySelector<HTMLInputElement>('input[type="file"]');
+    const zone = row.querySelector<HTMLSelectElement>('select[name="zone"]');
+    if (!input || !zone) return [];
+    const quantity = Number(row.dataset.quantity) || 1;
+    return Array.from(input.files ?? []).map((file) => ({
+      file,
+      model: {
+        kind: "upload",
+        label: file.name,
+        zone: zone.value,
+        quantity,
+      },
+    }));
+  });
+  const models = [
+    ...photoModels.map(({ model }) => model),
+    ...chosenModels.map((model) => ({
+      kind: "gallery",
+      label: model.alt,
+      zone: "Galerie",
+      quantity: model.quantity || 1,
+    })),
+  ];
+  const formData = new FormData();
+  [
+    "nom",
+    "prenom",
+    "telephone",
+    "email",
+    "commentaire",
+    "ville",
+    "participants",
+  ].forEach((name) => formData.set(name, v(name)));
+  formData.set("date", dateToIso(bookingDate.date));
+  formData.set("creneau", bookingSlot);
+  formData.set("niveau", selectedLevel);
+  formData.set("models", JSON.stringify(models));
+  formData.set(
+    "tarifAccepted",
+    String(
+      Boolean(f.querySelector<HTMLInputElement>('input[name="tarif"]')?.checked),
+    ),
   );
-  const msg = [
-    "Bonjour Nes Henna 👋 Je souhaite réserver un rendez-vous :",
-    `• Nom : ${v("prenom")} ${v("nom")}`,
-    `• Créneau : ${dateTxt}`,
-    `• Lieu : ${bookingDate.lieu}`,
-    `• Nombre de personnes : ${peopleCount}`,
-    `• Niveau : ${LEVEL_LABELS[niveau]} (à partir de ${SITE_CONFIG.prix[niveau]} €)`,
-    `• Parties du corps : ${zones.join(", ")}`,
-    chosenModels.length
-      ? `• Modèles choisis dans la galerie : ${chosenModels.map((model) => `${model.alt} x${model.quantity || 1}`).join(" | ")}`
-      : "• Je vous envoie mon modèle en photo juste après",
-    v("email") ? `• E-mail : ${v("email")}` : "",
-    v("commentaire") ? `• Commentaire : ${v("commentaire")}` : "",
-    "✅ J'ai compris que le tarif final est confirmé après envoi du modèle définitif.",
-  ]
-    .filter(Boolean)
-    .join("\n");
+  formData.set(
+    "cancellationAccepted",
+    String(
+      Boolean(
+        f.querySelector<HTMLInputElement>('input[name="annulation"]')?.checked,
+      ),
+    ),
+  );
+  photoModels.forEach(({ file }) => formData.append("images", file, file.name));
 
-  openModal(`
-    <h3>Demande prête à partir 🎉</h3>
-    <p>Merci ${escapeHtml(v("prenom"))} ! Il ne reste qu'une étape : envoyer votre demande sur WhatsApp, avec votre modèle final.</p>
-    <div class="recap">
-      <p>📅 <b>${dateTxt}</b></p>
-      <p>📍 ${bookingDate.lieu} <small>(adresse exacte donnée après validation)</small></p>
-      <p>✨ Niveau ${LEVEL_LABELS[niveau]} · à partir de ${SITE_CONFIG.prix[niveau]} €</p>
-      <p>⏱ Durée estimée : ${SITE_CONFIG.duree[niveau]} min</p>
-    </div>
-    <p><b>Prochaine étape :</b> envoyez le message puis votre photo de modèle. Je vous réponds avec le devis et je valide le créneau.</p>
-    <a class="btn btn-primary btn-block btn-lg" target="_blank" rel="noopener" href="${waLink(msg)}">💬 Envoyer sur WhatsApp</a>`);
+  const submit = $<HTMLButtonElement>("#booking-submit");
+  isSubmitting = true;
+  submit.textContent = "Envoi en cours…";
+  updateModelRequirement();
+  try {
+    const response = await fetch(bookingEndpoint("/book"), {
+      method: "POST",
+      body: formData,
+    });
+    const result = await readApiResponse<{
+      ok?: boolean;
+      emailSent?: boolean;
+      error?: string;
+    }>(response);
+    if (!response.ok || result.ok !== true) {
+      throw new Error(
+        result.error
+          ? apiErrorMessage(result.error)
+          : `L'envoi a échoué (HTTP ${response.status}).`,
+      );
+    }
+    const whatsappMessage = [
+      "Bonjour Nes Henna 👋 Ma demande de rendez-vous a été envoyée.",
+      `• Nom : ${v("prenom")} ${v("nom")}`,
+      `• Créneau : ${dateTxt}`,
+      `• Lieu : ${bookingDate.lieu}`,
+      "Je vous contacte pour confirmer le rendez-vous.",
+    ].join("\n");
+    openModal(`
+      <h3>Demande enregistrée 🎉</h3>
+      <p>Merci ${escapeHtml(v("prenom"))} ! Votre demande a bien été enregistrée. Nes Henna vous recontactera pour confirmer le rendez-vous.</p>
+      <div class="recap">
+        <p>📅 <b>${dateTxt}</b></p>
+        <p>📍 ${escapeHtml(bookingDate.lieu)} <small>(adresse exacte donnée après validation)</small></p>
+        <p>✨ Niveau ${LEVEL_LABELS[selectedLevel]} · à partir de ${SITE_CONFIG.prix[selectedLevel]} €</p>
+        <p>⏱ Durée estimée : ${SITE_CONFIG.duree[selectedLevel]} min</p>
+      </div>
+      ${
+        result.emailSent
+          ? "<p>Un accusé de réception vous a été envoyé par e-mail.</p>"
+          : `<p>Le serveur n'a pas pu envoyer l'e-mail de réception. Vous pouvez contacter Nes Henna sur WhatsApp pour confirmer votre demande.</p><a class="btn btn-primary btn-block btn-lg" target="_blank" rel="noopener" href="${waLink(whatsappMessage)}">💬 Contacter sur WhatsApp</a>`
+      }`);
+  } catch (error) {
+    err.hidden = false;
+    err.textContent =
+      error instanceof Error
+        ? error.message
+        : "La demande n'a pas pu être envoyée. Réessayez.";
+    err.scrollIntoView({ behavior: "smooth", block: "center" });
+  } finally {
+    isSubmitting = false;
+    submit.textContent = "Envoyer ma demande";
+    updateModelRequirement();
+  }
 });
 
 /* ---------- Modales (mentions, CGV, confidentialité) ---------- */
@@ -626,7 +794,7 @@ const TEXTES = {
     </ul>`,
   privacy: `<h3>Politique de confidentialité</h3>
     <p>Ce site ne dépose aucun cookie publicitaire ni de suivi. Il mémorise uniquement, sur votre appareil, votre confirmation d'accès à la galerie.</p>
-    <p>Les informations saisies dans le formulaire (prénom, nom, numéro WhatsApp, e-mail, commentaire) servent uniquement à organiser votre rendez-vous. Elles sont transmises via WhatsApp et ne sont pas revendues.</p>
+    <p>Les informations et photos envoyées dans le formulaire servent uniquement à traiter votre demande de rendez-vous. Elles sont transmises au serveur de réservation, à Google Calendar et, si l'envoi d'e-mails est configuré, au service de messagerie. Elles ne sont pas revendues.</p>
     <p>Vous pouvez demander la suppression de vos données à tout moment en écrivant à [e-mail à compléter].</p>`,
 };
 function openModal(html: string) {
