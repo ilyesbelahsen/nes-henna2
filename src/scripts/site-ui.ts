@@ -1,13 +1,10 @@
+import EmblaCarousel from "embla-carousel";
+import AutoScroll from "embla-carousel-auto-scroll";
 import {
   SITE_CONFIG,
   type Level,
 } from "../data/site";
 import { $, $$, waLink } from "./dom";
-
-interface DragState {
-  startX: number;
-  offset: number;
-}
 
 let revealObserver: IntersectionObserver | null = null;
 let reduceMotion = false;
@@ -71,52 +68,29 @@ function initializeHeader() {
 }
 
 function initializeReviewsMarquee() {
-  const track = document.querySelector<HTMLElement>("[data-reviews-track]");
-  if (!track) return;
+  const viewport = document.querySelector<HTMLElement>(".reviews-viewport");
+  const track = viewport?.querySelector<HTMLElement>("[data-reviews-track]");
+  if (!viewport || !track) return;
 
-  const duration = 26;
-  let drag: DragState | null = null;
-
-  $$(".review", track).forEach((review) => {
+  Array.from(track.children).forEach((review) => {
     const clone = review.cloneNode(true) as HTMLElement;
     clone.classList.remove("reveal");
     clone.setAttribute("aria-hidden", "true");
     track.append(clone);
   });
 
-  track.addEventListener("pointerdown", (event: PointerEvent) => {
-    if (event.button !== 0) return;
-    const transform = getComputedStyle(track).transform;
-    const offset = transform === "none" ? 0 : new DOMMatrix(transform).m41;
-    track.style.animation = "none";
-    track.style.transform = `translateX(${offset}px)`;
-    track.classList.add("is-dragging");
-    track.setPointerCapture(event.pointerId);
-    drag = { startX: event.clientX, offset };
-  });
-
-  track.addEventListener("pointermove", (event: PointerEvent) => {
-    if (!drag) return;
-    const offset = drag.offset + event.clientX - drag.startX;
-    track.style.transform = `translateX(${offset}px)`;
-  });
-
-  const finishDrag = (event: PointerEvent) => {
-    if (!drag) return;
-    const loopDistance = track.scrollWidth / 2;
-    const offset = drag.offset + event.clientX - drag.startX;
-    const progress =
-      (((-offset % loopDistance) + loopDistance) % loopDistance) / loopDistance;
-    track.style.animation = `reviews-marquee ${duration}s linear infinite`;
-    track.style.animationDelay = `${-progress * duration}s`;
-    track.style.transform = "";
-    track.classList.remove("is-dragging");
-    track.releasePointerCapture(event.pointerId);
-    drag = null;
-  };
-
-  track.addEventListener("pointerup", finishDrag);
-  track.addEventListener("pointercancel", finishDrag);
+  EmblaCarousel(
+    viewport,
+    { align: "start", dragFree: true, loop: true },
+    [
+      AutoScroll({
+        active: !matchMedia("(prefers-reduced-motion: reduce)").matches,
+        speed: 1,
+        startDelay: 0,
+        stopOnInteraction: false,
+      }),
+    ],
+  );
 }
 
 const TEXTES = {

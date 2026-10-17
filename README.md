@@ -30,10 +30,10 @@ Commandes disponibles :
 - `src/components/` : sections HTML séparées en composants Astro.
 - `src/data/site.ts` : configuration et galerie typées.
 - `src/scripts/main.ts` : point d'entrée qui initialise les modules du navigateur.
-- `src/scripts/site/booking.ts` : calendrier, disponibilité, photos importées et envoi du formulaire.
-- `src/scripts/site/gallery.ts` : galerie, lightbox et modèles sélectionnés.
-- `src/scripts/site/site-ui.ts` : animations, en-tête, avis et modales d'information.
-- `src/scripts/site/dom.ts` et `quantity-control.ts` : utilitaires DOM et contrôle de quantité partagés.
+- `src/scripts/booking.ts` : calendrier, disponibilité, photos importées et envoi du formulaire.
+- `src/scripts/gallery.ts` : galerie, lightbox et modèles sélectionnés.
+- `src/scripts/site-ui.ts` : animations, en-tête, carrousel Embla des avis et modales d'information.
+- `src/scripts/dom.ts` et `quantity-control.ts` : utilitaires DOM et contrôle de quantité partagés.
 - `server/server.js` : API Node/Express pour les disponibilités et réservations.
 - `server/calendar.js` : recherche des créneaux libres et création d'événements.
 - `server/mailer.js` : accusé de réception et notification avec les photos jointes.

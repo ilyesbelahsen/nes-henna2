@@ -608,16 +608,16 @@ h3 {
 .reviews-viewport {
   overflow: hidden;
   padding: 0.5rem 0 1.5rem;
+  cursor: grab;
+  touch-action: pan-y;
 }
 .reviews-track {
   display: flex;
   gap: 1.5rem;
   will-change: transform;
-  animation: reviews-marquee 26s linear infinite;
-  cursor: grab;
   touch-action: pan-y;
 }
-.reviews-track.is-dragging {
+.reviews-viewport:active {
   cursor: grabbing;
 }
 .review {
@@ -650,12 +650,6 @@ h3 {
   font-weight: 600;
   color: var(--crimson);
 }
-@keyframes reviews-marquee {
-  to {
-    transform: translateX(-50%);
-  }
-}
-
 /* ===== Formulaire ===== */
 .booking {
   background: #fff;
