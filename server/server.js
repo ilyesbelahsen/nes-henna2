@@ -6,6 +6,7 @@ import rateLimit from "express-rate-limit";
 import {
   ALLOWED_ORIGIN,
   IMAGE_PATTERN,
+  MAX_DAYS_AHEAD,
   MAX_FILES,
   MAX_SIZE,
   MAX_TOTAL_FILE_SIZE,
@@ -16,6 +17,7 @@ import {
   freeSlots,
   getAvailabilityCalendarId,
   parseDay,
+  availableDays,
   withLock,
 } from "./calendar.js";
 import { readBooking } from "./booking.js";
@@ -50,6 +52,29 @@ const upload = multer({
 });
 
 app.get("/health", (_req, res) => res.json({ status: "ok" }));
+
+app.get(
+  "/days",
+  rateLimit({
+    windowMs: 60_000,
+    limit: 30,
+    message: { error: "limite_disponibilites" },
+  }),
+  async (req, res) => {
+    const ville = typeof req.query.ville === "string" ? req.query.ville : "";
+    if (!getAvailabilityCalendarId(ville))
+      return res.status(400).json({ error: "ville_invalide" });
+    const count = Number(req.query.count);
+    if (!Number.isInteger(count) || count < 1 || count > Number(MAX_DAYS_AHEAD))
+      return res.status(400).json({ error: "nombre_jours_invalide" });
+    try {
+      return res.json({ days: await availableDays(ville, count) });
+    } catch (error) {
+      console.error("days:", error.message);
+      return res.status(502).json({ error: "calendrier_indisponible" });
+    }
+  },
+);
 
 app.get(
   "/slots",

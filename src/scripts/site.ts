@@ -413,22 +413,68 @@ function buildDays(lieu: string) {
   daysEl.innerHTML = "";
   slotsEl.innerHTML = "";
   slotsEl.hidden = true;
-  slotRequest += 1;
-  daysEl.hidden = false;
+  daysEl.hidden = true;
   selectedDate = null;
   selectedSlot = null;
-  const today = new Date();
-  for (let i = 1; i <= SITE_CONFIG.joursAffiches; i++) {
-    const d = new Date(today);
-    d.setDate(today.getDate() + i);
-    const b = document.createElement("button");
-    b.type = "button";
-    b.className = "day";
-    b.setAttribute("role", "option");
-    b.innerHTML = `<small>${JOURS[d.getDay()]}</small><b>${d.getDate()}</b><small>${MOIS[d.getMonth()]}</small>`;
-    b.addEventListener("click", () => selectDay(b, d, lieu));
-    daysEl.append(b);
-  }
+  const requestId = ++slotRequest;
+  placeEl.textContent = `📍 ${lieu} – recherche des jours disponibles`;
+  void (async () => {
+    try {
+      const response = await fetch(
+        bookingEndpoint(
+          `/days?ville=${encodeURIComponent(lieu)}&count=${SITE_CONFIG.joursAffiches}`,
+        ),
+      );
+      const body = await readApiResponse<{ error?: string; days?: unknown }>(
+        response,
+      );
+      if (!response.ok) {
+        throw new Error(
+          body.error
+            ? apiErrorMessage(body.error)
+            : `Impossible de charger les jours (HTTP ${response.status}).`,
+        );
+      }
+      if (
+        !Array.isArray(body.days) ||
+        !body.days.every(
+          (day) =>
+            typeof day === "string" &&
+            /^\d{4}-\d{2}-\d{2}$/.test(day),
+        )
+      ) {
+        throw new Error("Le serveur a renvoyé des jours invalides.");
+      }
+      if (requestId !== slotRequest) return;
+
+      daysEl.replaceChildren();
+      body.days.forEach((isoDay) => {
+        const [year, month, day] = isoDay.split("-").map(Number);
+        const date = new Date(year, month - 1, day);
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "day";
+        button.setAttribute("role", "option");
+        button.innerHTML = `<small>${JOURS[date.getDay()]}</small><b>${date.getDate()}</b><small>${MOIS[date.getMonth()]}</small>`;
+        button.addEventListener("click", () => selectDay(button, date, lieu));
+        daysEl.append(button);
+      });
+
+      if (body.days.length === 0) {
+        placeEl.textContent = `📍 ${lieu} – aucun jour disponible dans les ${SITE_CONFIG.joursAffiches} prochains jours.`;
+        return;
+      }
+      daysEl.hidden = false;
+      placeEl.textContent = `📍 ${lieu} – choisissez un jour disponible`;
+    } catch (error) {
+      if (requestId !== slotRequest) return;
+      daysEl.replaceChildren();
+      placeEl.textContent =
+        error instanceof Error
+          ? error.message
+          : "Impossible de charger les jours disponibles. Réessayez.";
+    }
+  })();
 }
 
 /* Photos des modèles */
@@ -596,6 +642,7 @@ const API_ERROR_MESSAGES: Record<string, string> = {
   fichiers_trop_volumineux:
     "Le poids total des photos ne doit pas dépasser 28 Mo.",
   ville_invalide: "La ville choisie n'est pas valide. Sélectionnez une ville proposée.",
+  nombre_jours_invalide: "La période de recherche n'est pas valide.",
   origine_non_autorisee:
     "Le serveur de réservation refuse cette origine. Contactez Nes Henna.",
   limite_disponibilites:

@@ -50,11 +50,11 @@ async function getBusy(from, to) {
   }));
 }
 
-async function getWindows(day, calendarId) {
+async function getWindows(from, to, calendarId) {
   const { data } = await calendar.events.list({
     calendarId,
-    timeMin: day.startOf("day").toUTC().toISO(),
-    timeMax: day.endOf("day").toUTC().toISO(),
+    timeMin: from.toUTC().toISO(),
+    timeMax: to.toUTC().toISO(),
     singleEvents: true,
     orderBy: "startTime",
   });
@@ -66,43 +66,32 @@ async function getWindows(day, calendarId) {
         event.end?.dateTime,
     )
     .map((event) => ({
-      start: DateTime.max(
-        DateTime.fromISO(event.start.dateTime).setZone(TIMEZONE),
-        day.startOf("day"),
-      ),
-      end: DateTime.min(
-        DateTime.fromISO(event.end.dateTime).setZone(TIMEZONE),
-        day.endOf("day"),
-      ),
+      start: DateTime.max(DateTime.fromISO(event.start.dateTime).setZone(TIMEZONE), from),
+      end: DateTime.min(DateTime.fromISO(event.end.dateTime).setZone(TIMEZONE), to),
     }));
 }
 
-export async function freeSlots(day, ville) {
-  const availabilityCalendarId = getAvailabilityCalendarId(ville);
-  if (!availabilityCalendarId) throw new Error("ville_invalide");
-
-  const now = DateTime.now().setZone(TIMEZONE);
-  if (
-    day < now.startOf("day") ||
-    day > now.plus({ days: Number(MAX_DAYS_AHEAD) })
-  )
-    return [];
-  const earliest = now.plus({ hours: Number(MIN_NOTICE_HOURS) });
+function getCandidateStarts(day, windows, earliest) {
   const found = new Map();
-  for (const window of await getWindows(day, availabilityCalendarId)) {
+  const dayStart = day.startOf("day");
+  const dayEnd = day.endOf("day");
+  for (const window of windows) {
+    const start = DateTime.max(window.start, dayStart);
+    const end = DateTime.min(window.end, dayEnd);
     for (
-      let time = window.start;
-      time.plus({ minutes: slotMinutes }) <= window.end;
+      let time = start;
+      time.plus({ minutes: slotMinutes }) <= end;
       time = time.plus({ minutes: slotMinutes })
     ) {
       if (time >= earliest) found.set(time.toMillis(), time);
     }
   }
-  const candidates = [...found.values()].sort(
+  return [...found.values()].sort(
     (a, b) => a.toMillis() - b.toMillis(),
   );
-  if (!candidates.length) return [];
-  const busy = await getBusy(day.startOf("day"), day.endOf("day"));
+}
+
+function getAvailableSlots(candidates, busy) {
   return candidates
     .filter(
       (start) =>
@@ -113,6 +102,63 @@ export async function freeSlots(day, ville) {
         ),
     )
     .map((start) => start.toFormat("HH:mm"));
+}
+
+function getAvailabilityCalendarIdForCity(ville) {
+  const calendarId = getAvailabilityCalendarId(ville);
+  if (!calendarId) throw new Error("ville_invalide");
+  return calendarId;
+}
+
+export async function freeSlots(day, ville) {
+  const calendarId = getAvailabilityCalendarIdForCity(ville);
+  const now = DateTime.now().setZone(TIMEZONE);
+  if (
+    day < now.startOf("day") ||
+    day > now.plus({ days: Number(MAX_DAYS_AHEAD) })
+  )
+    return [];
+
+  const earliest = now.plus({ hours: Number(MIN_NOTICE_HOURS) });
+  const from = day.startOf("day");
+  const to = day.endOf("day");
+  const windows = await getWindows(from, to, calendarId);
+  const candidates = getCandidateStarts(day, windows, earliest);
+  if (!candidates.length) return [];
+
+  const busy = await getBusy(from, to);
+  return getAvailableSlots(candidates, busy);
+}
+
+export async function availableDays(ville, count) {
+  const calendarId = getAvailabilityCalendarIdForCity(ville);
+  if (!Number.isInteger(count) || count < 1 || count > Number(MAX_DAYS_AHEAD))
+    throw new Error("nombre_jours_invalide");
+
+  const now = DateTime.now().setZone(TIMEZONE);
+  const earliest = now.plus({ hours: Number(MIN_NOTICE_HOURS) });
+  const from = now.startOf("day").plus({ days: 1 });
+  const lastDay = DateTime.min(
+    from.plus({ days: count - 1 }),
+    now.plus({ days: Number(MAX_DAYS_AHEAD) }).startOf("day"),
+  );
+  if (lastDay < from) return [];
+
+  const to = lastDay.endOf("day");
+  const windows = await getWindows(from, to, calendarId);
+  const candidatesByDay = new Map();
+  for (let offset = 0; offset < count; offset += 1) {
+    const day = from.plus({ days: offset });
+    if (day > lastDay) break;
+    const candidates = getCandidateStarts(day, windows, earliest);
+    if (candidates.length) candidatesByDay.set(day.toISODate(), candidates);
+  }
+  if (!candidatesByDay.size) return [];
+
+  const busy = await getBusy(from, to);
+  return [...candidatesByDay]
+    .filter(([, candidates]) => getAvailableSlots(candidates, busy).length > 0)
+    .map(([date]) => date);
 }
 
 export async function createCalendarEvent(booking, files) {
