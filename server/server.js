@@ -8,6 +8,7 @@ import {
   IMAGE_PATTERN,
   MAX_FILES,
   MAX_SIZE,
+  MAX_TOTAL_FILE_SIZE,
   PORT,
 } from "./config.js";
 import {
@@ -79,9 +80,15 @@ app.post(
   async (req, res) => {
     if (String(req.body.website ?? "").trim())
       return res.status(400).json({ error: "soumission_invalide" });
+    const files = req.files ?? [];
+    if (
+      files.reduce((total, file) => total + file.size, 0) >
+      MAX_TOTAL_FILE_SIZE
+    ) {
+      return res.status(413).json({ error: "fichiers_trop_volumineux" });
+    }
     const booking = readBooking(req.body);
     if (!booking) return res.status(400).json({ error: "donnees_invalides" });
-    const files = req.files ?? [];
     try {
       const start = await withLock(async () =>
         (await freeSlots(booking.day)).includes(booking.creneau)

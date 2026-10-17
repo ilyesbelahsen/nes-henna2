@@ -591,6 +591,8 @@ const API_ERROR_MESSAGES: Record<string, string> = {
   fichiers_invalides:
     "Les photos doivent être des images valides de 10 Mo maximum chacune, avec 5 photos au plus.",
   photo_trop_volumineuse: "Chaque photo doit faire 10 Mo maximum.",
+  fichiers_trop_volumineux:
+    "Le poids total des photos ne doit pas dépasser 28 Mo.",
   origine_non_autorisee:
     "Le serveur de réservation refuse cette origine. Contactez Nes Henna.",
   limite_disponibilites:

@@ -6,9 +6,11 @@ process.env.GOOGLE_PRIVATE_KEY ??= "test-key";
 process.env.CALENDAR_ID ??= "booking-calendar";
 process.env.AVAILABILITY_CALENDAR_ID ??= "availability-calendar";
 process.env.ALLOWED_ORIGIN ??= "http://localhost:4321";
+process.env.RESEND_API_KEY = "";
 
 const { readBooking } = await import("../booking.js");
 const { buildBookingEmailContent } = await import("../mail-content.js");
+const { createMailSender } = await import("../mailer.js");
 
 const validRequest = () => ({
   nom: "Martin",
@@ -102,5 +104,79 @@ test("escapes email HTML and rejects mismatched model photos", () => {
   assert.throws(
     () => buildBookingEmailContent(booking, "date", [{ originalname: "extra.png" }]),
     /ne correspondent pas/,
+  );
+});
+
+test("sends receipt and structured owner email through Resend", async () => {
+  const requests = [];
+  const sendMails = createMailSender(
+    {
+      emails: {
+        send: async (email) => {
+          requests.push(email);
+          return { data: { id: `email-${requests.length}` }, error: null };
+        },
+      },
+    },
+    { from: "onboarding@resend.dev", ownerEmail: "delivered@resend.dev" },
+  );
+  const booking = readBooking({
+    ...validRequest(),
+    email: "delivered@resend.dev",
+  });
+  const photo = Buffer.from("image");
+
+  const emailSent = await sendMails({
+    booking,
+    start: {
+      setLocale: () => ({
+        toFormat: () => "lundi 20 mai 2030 à 10:00",
+      }),
+    },
+    files: [
+      {
+        originalname: "modele-main.png",
+        buffer: photo,
+        mimetype: "image/png",
+      },
+    ],
+  });
+
+  assert.equal(emailSent, true);
+  assert.equal(requests.length, 2);
+  assert.deepEqual(requests[0].to, ["delivered@resend.dev"]);
+  assert.equal(requests[0].from, "onboarding@resend.dev");
+  assert.deepEqual(requests[1].to, ["delivered@resend.dev"]);
+  assert.deepEqual(requests[1].replyTo, ["delivered@resend.dev"]);
+  assert.match(requests[1].text, /Partie du corps : Paume/);
+  assert.equal(requests[1].attachments[0].filename, "modele-main.png");
+  assert.equal(requests[1].attachments[0].content, photo);
+  assert.equal(requests[1].attachments[0].contentType, "image/png");
+});
+
+test("reports Resend API errors instead of marking email as sent", async () => {
+  const sendMails = createMailSender(
+    {
+      emails: {
+        send: async () => ({
+          data: null,
+          error: { message: "The sender domain is not verified" },
+        }),
+      },
+    },
+    { from: "booking@example.com", ownerEmail: "" },
+  );
+
+  await assert.rejects(
+    sendMails({
+      booking: readBooking(validRequest()),
+      start: {
+        setLocale: () => ({
+          toFormat: () => "lundi 20 mai 2030 à 10:00",
+        }),
+      },
+      files: [{ originalname: "modele-main.png" }],
+    }),
+    /Resend : The sender domain is not verified/,
   );
 });

@@ -11,11 +11,8 @@ export const {
   MIN_NOTICE_HOURS = "2",
   MAX_DAYS_AHEAD = "60",
   ALLOWED_ORIGIN,
+  RESEND_API_KEY,
   OWNER_EMAIL,
-  SMTP_HOST,
-  SMTP_PORT = "587",
-  SMTP_USER,
-  SMTP_PASS,
   MAIL_FROM,
   PORT = "3000",
 } = env;
@@ -30,9 +27,14 @@ for (const [key, value] of Object.entries({
   if (!value) throw new Error(`Variable d'environnement manquante : ${key}`);
 }
 
+if (RESEND_API_KEY && !MAIL_FROM) {
+  throw new Error("La variable d'environnement MAIL_FROM est requise avec Resend.");
+}
+
 export const slotMinutes = Number(SLOT_MINUTES);
 export const MAX_FILES = 5;
 export const MAX_SIZE = 10 * 1024 * 1024;
+export const MAX_TOTAL_FILE_SIZE = 28 * 1024 * 1024;
 export const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 export const TIME_PATTERN = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
 export const IMAGE_PATTERN = /^image\/(jpeg|png|webp|gif|heic|heif)$/;

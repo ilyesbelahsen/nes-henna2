@@ -20,6 +20,6 @@
     "googleapis": "^186.0.0",
     "luxon": "^3.5.0",
     "multer": "^2.0.0",
-    "nodemailer": "^10.0.6"
+    "resend": "^6.34.1"
   }
 }
