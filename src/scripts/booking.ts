@@ -1,4 +1,4 @@
-import { LEVEL_LABELS, SITE_CONFIG } from "../data/site";
+import { SITE_CONFIG } from "../data/site";
 import { $, $$, escapeHtml, waLink } from "./dom";
 import { createQuantityControl } from "./quantity-control";
 import type { GalleryController } from "./gallery";
@@ -477,6 +477,7 @@ async function submitBooking(event: Event) {
   if (!bookingDate || !bookingSlot) return;
   const dateText = `${JOURS[bookingDate.date.getDay()]} ${bookingDate.date.getDate()} ${MOIS[bookingDate.date.getMonth()]} ${bookingDate.date.getFullYear()} à ${bookingSlot}`;
   const level = galleryController().getLevel();
+  const estimatedDuration = getEstimatedDuration();
   const photoModels = importedModels.map(({ file, zone, quantity }) => ({
     file,
     model: {
@@ -512,7 +513,7 @@ async function submitBooking(event: Event) {
   formData.set("date", dateToIso(bookingDate.date));
   formData.set("creneau", bookingSlot);
   formData.set("niveau", level);
-  formData.set("duration", String(getEstimatedDuration()));
+  formData.set("duration", String(estimatedDuration));
   formData.set("models", JSON.stringify(models));
   formData.set(
     "tarifAccepted",
@@ -568,8 +569,7 @@ async function submitBooking(event: Event) {
       <div class="recap">
         <p>📅 <b>${dateText}</b></p>
         <p>📍 ${escapeHtml(bookingDate.lieu)} <small>(adresse exacte donnée après validation)</small></p>
-        <p>✨ Niveau ${LEVEL_LABELS[level]} · à partir de ${SITE_CONFIG.prix[level]} €</p>
-        <p>⏱ Durée estimée : ${SITE_CONFIG.duree[level]} min</p>
+        <p>⏱ Durée estimée : ${formatDuration(estimatedDuration)}</p>
       </div>
       ${
         result.emailSent
