@@ -46,7 +46,7 @@ export function initializeGallery(
       name.textContent = model.alt;
       const duration = document.createElement("small");
       duration.className = "model-zone";
-      duration.textContent = `Temps : ${model.durationMinutes} min`;
+      duration.textContent = `${model.niveau} · ${model.durationMinutes} min`;
       const quantity = createQuantityControl(model.quantity || 1, (value) => {
         model.quantity = value;
         renderChosenModels();

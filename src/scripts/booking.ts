@@ -8,13 +8,19 @@ interface SelectedDate {
   lieu: string;
 }
 
+interface ImportedModel {
+  file: File;
+  zone: string;
+  quantity: number;
+}
+
 let gallery: GalleryController | null = null;
 let selectedDate: SelectedDate | null = null;
 let selectedSlot: string | null = null;
 let slotRequest = 0;
 let isSubmitting = false;
-let photoCount = 1;
 let availabilityKey: string | null = null;
+let importedModels: ImportedModel[] = [];
 
 const bookingApiBase =
   import.meta.env.PUBLIC_BOOKING_API_URL?.replace(/\/+$/, "") ?? "";
@@ -53,27 +59,6 @@ function bookingEndpoint(path: string) {
     throw new Error("Le serveur de réservation n'est pas configuré.");
   }
   return `${bookingApiBase}${path}`;
-}
-
-function renderSlots(date: Date, lieu: string, availableSlots: string[]) {
-  slotsEl.innerHTML = "";
-  availableSlots.forEach((hour) => {
-    const slot = document.createElement("button");
-    slot.type = "button";
-    slot.className = "slot";
-    slot.textContent = hour;
-    slot.setAttribute("role", "option");
-    slot.addEventListener("click", () => {
-      $$(".slot").forEach((item) => item.classList.remove("sel"));
-      slot.classList.add("sel");
-      selectedSlot = hour;
-      placeEl.textContent = `📍 ${lieu} · ${JOURS[date.getDay()]} ${date.getDate()} ${MOIS[date.getMonth()]} à ${hour}`;
-    });
-    slotsEl.append(slot);
-  });
-  if (availableSlots.length === 0) {
-    placeEl.textContent = `📍 ${lieu} – aucun créneau disponible ce jour-là.`;
-  }
 }
 
 function dateToIso(date: Date) {
@@ -136,6 +121,24 @@ async function selectDay(
         ? error.message
         : "Impossible de charger les disponibilités. Réessayez.";
   }
+}
+
+function renderSlots(date: Date, lieu: string, slots: string[]) {
+  slotsEl.replaceChildren();
+  slotsEl.hidden = false;
+  slots.forEach((slot) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "slot";
+    button.textContent = slot;
+    button.addEventListener("click", () => {
+      $$(".slot").forEach((item) => item.classList.remove("sel"));
+      button.classList.add("sel");
+      selectedDate = { date, lieu };
+      selectedSlot = slot;
+    });
+    slotsEl.append(button);
+  });
 }
 
 function buildDays(lieu: string, durationMinutes: number) {
@@ -230,59 +233,51 @@ function refreshAvailability() {
 }
 
 function updateUploadedModels() {
-  const models = $$(".photo-row", photoFields).flatMap((row) => {
-    const input = row.querySelector<HTMLInputElement>('input[type="file"]');
-    const zone = row.querySelector<HTMLSelectElement>('select[name="zone"]');
-    if (!input || !zone) return [];
-    const quantity = Number(row.dataset.quantity) || 1;
-    return Array.from(input.files ?? []).map((file) => ({
-      file,
-      zone: zone.value,
-      quantity,
-      row,
-    }));
-  });
   const uploadedModels = $("#uploaded-models");
   const uploadedList = $("#uploaded-list");
   const uploadedCount = $("#uploaded-count");
   uploadedList.replaceChildren();
-  uploadedModels.hidden = models.length === 0;
-  uploadedCount.textContent = `(${models.length})`;
-  models.forEach(({ file, zone, quantity, row }) => {
+  uploadedModels.hidden = importedModels.length === 0;
+  uploadedCount.textContent = `(${importedModels.length})`;
+  importedModels.forEach((model, index) => {
     const item = document.createElement("div");
     item.className = "uploaded-item";
     const image = document.createElement("img");
-    image.src = URL.createObjectURL(file);
-    image.alt = `Modèle importé : ${file.name}`;
+    image.src = URL.createObjectURL(model.file);
+    image.alt = `Modèle importé : ${model.file.name}`;
     const details = document.createElement("div");
     details.className = "model-details";
     const name = document.createElement("span");
     name.className = "model-name";
-    name.textContent = file.name;
+    name.textContent = model.file.name;
     const bodyPart = document.createElement("small");
     bodyPart.className = "model-zone";
-    bodyPart.textContent = `Partie : ${zone}`;
-    const quantityControl = createQuantityControl(quantity, (value) => {
-      row.dataset.quantity = String(value);
+    bodyPart.textContent = `Partie : ${model.zone}`;
+    const quantityControl = createQuantityControl(model.quantity, (value) => {
+      model.quantity = value;
+      updateUploadedModels();
+    });
+    const removeButton = document.createElement("button");
+    removeButton.type = "button";
+    removeButton.className = "remove-model";
+    removeButton.textContent = "Supprimer";
+    removeButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      importedModels.splice(index, 1);
       updateUploadedModels();
     });
     details.append(name, bodyPart);
-    item.append(image, details, quantityControl);
+    item.append(image, details, quantityControl, removeButton);
     uploadedList.append(item);
   });
   updateModelRequirement();
 }
 
 function getModelCount() {
-  const importedCount = $$<HTMLInputElement>(
-    "input[type='file']",
-    photoFields,
-  ).reduce((count, input) => {
-    const row = input.closest<HTMLElement>(".photo-row");
-    return (
-      count + (input.files?.length ? Number(row?.dataset.quantity) || 1 : 0)
-    );
-  }, 0);
+  const importedCount = importedModels.reduce(
+    (count, model) => count + model.quantity,
+    0,
+  );
   const chosenCount = galleryController()
     .getModels()
     .reduce((count, model) => count + (model.quantity || 1), 0);
@@ -290,14 +285,10 @@ function getModelCount() {
 }
 
 function getEstimatedDuration() {
-  const importedDuration = $$<HTMLInputElement>(
-    "input[type='file']",
-    photoFields,
-  ).reduce((total, input) => {
-    const row = input.closest<HTMLElement>(".photo-row");
-    const quantity = Number(row?.dataset.quantity) || 1;
-    return total + (input.files?.length ? 45 * quantity : 0);
-  }, 0);
+  const importedDuration = importedModels.reduce(
+    (total, model) => total + 45 * model.quantity,
+    0,
+  );
   const galleryDuration = galleryController()
     .getModels()
     .reduce(
@@ -348,56 +339,24 @@ function initializePhotoFields() {
   });
 
   photoFields.addEventListener("change", updateUploadedModels);
-  photoFields.addEventListener("click", (event) => {
-    const removeButton =
-      event.target instanceof Element
-        ? event.target.closest(".remove-photo")
-        : null;
-    if (!removeButton) return;
-    event.preventDefault();
-    const row = removeButton.closest(".photo-row");
-    if (!row) return;
-    row.remove();
-    updateUploadedModels();
-  });
 
   $("#add-photo").addEventListener("click", () => {
-    photoCount += 1;
-    const row = document.createElement("div");
-    row.className = "photo-row";
-    const label = document.createElement("label");
-    label.className = "field";
-    label.append(`Photo du modèle ${photoCount}`);
-
-    const input = document.createElement("input");
-    input.name = "photo";
-    input.type = "file";
-    input.accept = "image/*,.heic,.heif";
-    label.append(input);
-    const zoneLabel = document.createElement("label");
-    zoneLabel.className = "field";
-    zoneLabel.append("Partie du corps");
-    const zone = document.createElement("select");
-    zone.name = "zone";
-    [
-      "Main (dos)",
-      "Paume",
-      "Les deux mains",
-      "Avant-bras",
-      "Pied",
-      "Autre",
-    ].forEach((value) => {
-      const option = document.createElement("option");
-      option.textContent = value;
-      zone.append(option);
-    });
-    zoneLabel.append(zone);
-    const removeButton = document.createElement("button");
-    removeButton.type = "button";
-    removeButton.className = "remove-photo";
-    removeButton.textContent = "Supprimer";
-    row.append(label, zoneLabel, removeButton);
-    photoFields.append(row);
+    const input = $<HTMLInputElement>("input[type='file']", photoFields);
+    const zone = $<HTMLSelectElement>("select[name='zone']", photoFields);
+    const file = input.files?.[0];
+    if (!file) {
+      input.focus();
+      return;
+    }
+    if (!zone.value) {
+      zone.focus();
+      return;
+    }
+    importedModels.push({ file, zone: zone.value, quantity: 1 });
+    input.value = "";
+    zone.selectedIndex = 0;
+    updateUploadedModels();
+    input.focus();
   });
 }
 
@@ -461,10 +420,7 @@ function resetBookingForm(form: HTMLFormElement) {
   availabilityEl.hidden = true;
   placeEl.textContent =
     "Complétez les étapes précédentes pour voir les jours disponibles.";
-  const rows = $$(".photo-row", photoFields);
-  rows.slice(1).forEach((row) => row.remove());
-  if (rows[0]) rows[0].dataset.quantity = "1";
-  photoCount = 1;
+  importedModels = [];
   galleryController().reset();
   updateUploadedModels();
   refreshAvailability();
@@ -521,22 +477,16 @@ async function submitBooking(event: Event) {
   if (!bookingDate || !bookingSlot) return;
   const dateText = `${JOURS[bookingDate.date.getDay()]} ${bookingDate.date.getDate()} ${MOIS[bookingDate.date.getMonth()]} ${bookingDate.date.getFullYear()} à ${bookingSlot}`;
   const level = galleryController().getLevel();
-  const photoModels = $$(".photo-row", photoFields).flatMap((row) => {
-    const input = row.querySelector<HTMLInputElement>('input[type="file"]');
-    const zone = row.querySelector<HTMLSelectElement>('select[name="zone"]');
-    if (!input || !zone) return [];
-    const quantity = Number(row.dataset.quantity) || 1;
-    return Array.from(input.files ?? []).map((file) => ({
-      file,
-      model: {
-        kind: "upload",
-        label: file.name,
-        zone: zone.value,
-        quantity,
-        duration: 45,
-      },
-    }));
-  });
+  const photoModels = importedModels.map(({ file, zone, quantity }) => ({
+    file,
+    model: {
+      kind: "upload",
+      label: file.name,
+      zone,
+      quantity,
+      duration: 45,
+    },
+  }));
   const models = [
     ...photoModels.map(({ model }) => model),
     ...galleryController()

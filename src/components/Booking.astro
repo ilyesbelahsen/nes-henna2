@@ -114,6 +114,9 @@
                     <label class="field"
                       >Partie du corps{" "}
                       <select name="zone">
+                        <option value="" disabled selected>
+                          Sélectionner une partie
+                        </option>
                         <option>Main (dos)</option>
                         <option>Paume</option>
                         <option>Les deux mains</option>
@@ -124,8 +127,8 @@
                     </label>
                   </div>
                 </div>
-                <button type="button" class="btn-link inline" id="add-photo">
-                  + Ajouter un autre modèle
+                <button type="button" class="btn btn-ghost btn-sm" id="add-photo">
+                  Ajouter le modèle
                 </button>
                 <div id="uploaded-models" class="uploaded-models" hidden>
                   <strong
@@ -155,15 +158,6 @@
                   <div id="chosen-list" class="chosen-list"></div>
                 </div>
               </div>
-              <label class="field"
-                >Commentaire <span class="opt">(facultatif)</span
-                ><textarea
-                  name="commentaire"
-                  rows="3"
-                  maxlength="2000"
-                  placeholder="Occasion, tenue, couleur de la peau, allergies…"
-                ></textarea>
-              </label>
             </fieldset>
 
             <fieldset id="availability" hidden>
@@ -190,6 +184,16 @@
                 rendez-vous.
               </p>
             </fieldset>
+
+            <label class="field"
+              >Commentaire <span class="opt">(facultatif)</span
+              ><textarea
+                name="commentaire"
+                rows="3"
+                maxlength="2000"
+                placeholder="Occasion, tenue, couleur de la peau, allergies…"
+              ></textarea>
+            </label>
 
             <label class="check"
               ><input type="checkbox" name="tarif" required />
