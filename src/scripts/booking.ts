@@ -1,7 +1,4 @@
-import {
-  LEVEL_LABELS,
-  SITE_CONFIG,
-} from "../data/site";
+import { LEVEL_LABELS, SITE_CONFIG } from "../data/site";
 import { $, $$, escapeHtml, waLink } from "./dom";
 import { createQuantityControl } from "./quantity-control";
 import type { GalleryController } from "./gallery";
@@ -17,12 +14,15 @@ let selectedSlot: string | null = null;
 let slotRequest = 0;
 let isSubmitting = false;
 let photoCount = 1;
+let availabilityKey: string | null = null;
 
 const bookingApiBase =
   import.meta.env.PUBLIC_BOOKING_API_URL?.replace(/\/+$/, "") ?? "";
 const daysEl = $("#days");
 const slotsEl = $("#slots");
 const placeEl = $("#place-info");
+const availabilityEl = $("#availability");
+const bookingForm = $<HTMLFormElement>("#booking");
 const villeEl = $<HTMLInputElement>("#ville");
 const villesEl = $("#villes");
 const photoFields = $("#photo-fields");
@@ -43,7 +43,8 @@ const MOIS = [
 ];
 
 function galleryController(): GalleryController {
-  if (!gallery) throw new Error("La sélection de modèles n'est pas initialisée.");
+  if (!gallery)
+    throw new Error("La sélection de modèles n'est pas initialisée.");
   return gallery;
 }
 
@@ -82,7 +83,12 @@ function dateToIso(date: Date) {
   return `${year}-${month}-${day}`;
 }
 
-async function selectDay(button: HTMLButtonElement, date: Date, lieu: string) {
+async function selectDay(
+  button: HTMLButtonElement,
+  date: Date,
+  lieu: string,
+  durationMinutes: number,
+) {
   $$(".day").forEach((item) => item.classList.remove("sel"));
   button.classList.add("sel");
   selectedDate = { date, lieu };
@@ -94,7 +100,7 @@ async function selectDay(button: HTMLButtonElement, date: Date, lieu: string) {
   try {
     const response = await fetch(
       bookingEndpoint(
-        `/slots?date=${encodeURIComponent(dateToIso(date))}&ville=${encodeURIComponent(lieu)}`,
+        `/slots?date=${encodeURIComponent(dateToIso(date))}&ville=${encodeURIComponent(lieu)}&duree=${durationMinutes}`,
       ),
     );
     const body = await readApiResponse<{ error?: string; slots?: unknown }>(
@@ -132,7 +138,7 @@ async function selectDay(button: HTMLButtonElement, date: Date, lieu: string) {
   }
 }
 
-function buildDays(lieu: string) {
+function buildDays(lieu: string, durationMinutes: number) {
   daysEl.innerHTML = "";
   slotsEl.innerHTML = "";
   slotsEl.hidden = true;
@@ -145,7 +151,7 @@ function buildDays(lieu: string) {
     try {
       const response = await fetch(
         bookingEndpoint(
-          `/days?ville=${encodeURIComponent(lieu)}&count=${SITE_CONFIG.joursAffiches}`,
+          `/days?ville=${encodeURIComponent(lieu)}&count=${SITE_CONFIG.joursAffiches}&duree=${durationMinutes}`,
         ),
       );
       const body = await readApiResponse<{ error?: string; days?: unknown }>(
@@ -161,9 +167,7 @@ function buildDays(lieu: string) {
       if (
         !Array.isArray(body.days) ||
         !body.days.every(
-          (day) =>
-            typeof day === "string" &&
-            /^\d{4}-\d{2}-\d{2}$/.test(day),
+          (day) => typeof day === "string" && /^\d{4}-\d{2}-\d{2}$/.test(day),
         )
       ) {
         throw new Error("Le serveur a renvoyé des jours invalides.");
@@ -179,7 +183,9 @@ function buildDays(lieu: string) {
         button.className = "day";
         button.setAttribute("role", "option");
         button.innerHTML = `<small>${JOURS[date.getDay()]}</small><b>${date.getDate()}</b><small>${MOIS[date.getMonth()]}</small>`;
-        button.addEventListener("click", () => selectDay(button, date, lieu));
+        button.addEventListener("click", () =>
+          selectDay(button, date, lieu, durationMinutes),
+        );
         daysEl.append(button);
       });
 
@@ -198,6 +204,29 @@ function buildDays(lieu: string) {
           : "Impossible de charger les jours disponibles. Réessayez.";
     }
   })();
+}
+
+function refreshAvailability() {
+  if (!villeEl.value) {
+    availabilityKey = null;
+    availabilityEl.hidden = true;
+    daysEl.replaceChildren();
+    daysEl.hidden = true;
+    slotsEl.replaceChildren();
+    slotsEl.hidden = true;
+    selectedDate = null;
+    selectedSlot = null;
+    placeEl.textContent =
+      "Choisissez une ville pour voir les jours disponibles.";
+    return;
+  }
+
+  const durationMinutes = Math.max(30, getEstimatedDuration());
+  availabilityEl.hidden = false;
+  const nextKey = `${villeEl.value}:${durationMinutes}`;
+  if (availabilityKey === nextKey) return;
+  availabilityKey = nextKey;
+  buildDays(villeEl.value, durationMinutes);
 }
 
 function updateUploadedModels() {
@@ -248,18 +277,42 @@ function getModelCount() {
   const importedCount = $$<HTMLInputElement>(
     "input[type='file']",
     photoFields,
-  )
-    .reduce((count, input) => {
-      const row = input.closest<HTMLElement>(".photo-row");
-      return (
-        count +
-        (input.files?.length ? Number(row?.dataset.quantity) || 1 : 0)
-      );
-    }, 0);
+  ).reduce((count, input) => {
+    const row = input.closest<HTMLElement>(".photo-row");
+    return (
+      count + (input.files?.length ? Number(row?.dataset.quantity) || 1 : 0)
+    );
+  }, 0);
   const chosenCount = galleryController()
     .getModels()
     .reduce((count, model) => count + (model.quantity || 1), 0);
   return importedCount + chosenCount;
+}
+
+function getEstimatedDuration() {
+  const importedDuration = $$<HTMLInputElement>(
+    "input[type='file']",
+    photoFields,
+  ).reduce((total, input) => {
+    const row = input.closest<HTMLElement>(".photo-row");
+    const quantity = Number(row?.dataset.quantity) || 1;
+    return total + (input.files?.length ? 45 * quantity : 0);
+  }, 0);
+  const galleryDuration = galleryController()
+    .getModels()
+    .reduce(
+      (total, model) => total + model.durationMinutes * (model.quantity || 1),
+      0,
+    );
+  return importedDuration + galleryDuration;
+}
+
+function formatDuration(durationMinutes: number) {
+  const hours = Math.floor(durationMinutes / 60);
+  const minutes = durationMinutes % 60;
+  if (!hours) return `${minutes} min`;
+  if (!minutes) return `${hours} h`;
+  return `${hours} h ${minutes.toString().padStart(2, "0")}`;
 }
 
 export function updateModelRequirement() {
@@ -274,10 +327,16 @@ export function updateModelRequirement() {
   help.textContent = `${modelCount} modèle${modelCount > 1 ? "s" : ""} sélectionné${modelCount > 1 ? "s" : ""} pour ${peopleCount} personne${peopleCount > 1 ? "s" : ""}.`;
   submit.disabled = missing > 0 || isSubmitting;
   requirement.hidden = missing <= 0;
+  const estimatedDuration = $("#estimated-duration");
   requirement.textContent =
     missing > 0
       ? `Ajoutez encore ${missing} modèle${missing > 1 ? "s" : ""} au minimum pour pouvoir envoyer la demande.`
       : "Le nombre de modèles est suffisant pour toutes les personnes.";
+  estimatedDuration.textContent =
+    modelCount > 0
+      ? `Temps estimé : ${formatDuration(getEstimatedDuration())}`
+      : "Temps estimé : sélectionnez au moins un modèle.";
+  refreshAvailability();
 }
 
 function initializePhotoFields() {
@@ -346,8 +405,7 @@ const API_ERROR_MESSAGES: Record<string, string> = {
   date_invalide: "La date choisie n'est pas valide.",
   calendrier_indisponible:
     "Le calendrier est momentanément indisponible. Réessayez plus tard.",
-  creneau_pris:
-    "Ce créneau vient d'être pris. Choisissez-en un autre.",
+  creneau_pris: "Ce créneau vient d'être pris. Choisissez-en un autre.",
   donnees_invalides:
     "Certaines informations ou photos sont invalides. Vérifiez le formulaire.",
   soumission_invalide:
@@ -360,6 +418,7 @@ const API_ERROR_MESSAGES: Record<string, string> = {
   ville_invalide:
     "La ville choisie n'est pas valide. Sélectionnez une ville proposée.",
   nombre_jours_invalide: "La période de recherche n'est pas valide.",
+  duree_invalide: "La durée demandée n'est pas valide.",
   origine_non_autorisee:
     "Le serveur de réservation refuse cette origine. Contactez Nes Henna.",
   limite_disponibilites:
@@ -389,6 +448,7 @@ function resetBookingForm(form: HTMLFormElement) {
   form.reset();
   selectedDate = null;
   selectedSlot = null;
+  availabilityKey = null;
   slotRequest += 1;
   $$(".city").forEach((button) => {
     button.classList.remove("sel");
@@ -398,13 +458,16 @@ function resetBookingForm(form: HTMLFormElement) {
   daysEl.hidden = true;
   slotsEl.replaceChildren();
   slotsEl.hidden = true;
-  placeEl.textContent = "Choisissez une ville pour voir les jours disponibles.";
+  availabilityEl.hidden = true;
+  placeEl.textContent =
+    "Complétez les étapes précédentes pour voir les jours disponibles.";
   const rows = $$(".photo-row", photoFields);
   rows.slice(1).forEach((row) => row.remove());
   if (rows[0]) rows[0].dataset.quantity = "1";
   photoCount = 1;
   galleryController().reset();
   updateUploadedModels();
+  refreshAvailability();
 }
 
 async function submitBooking(event: Event) {
@@ -444,11 +507,11 @@ async function submitBooking(event: Event) {
     'input[name="annulation"]',
   );
   if (!tarif?.checked) problems.push("la mention sur le tarif");
-  if (!annulation?.checked)
-    problems.push("les conditions d'annulation");
+  if (!annulation?.checked) problems.push("les conditions d'annulation");
   if (problems.length) {
     errorElement.hidden = false;
-    errorElement.textContent = "Merci de renseigner : " + problems.join(", ") + ".";
+    errorElement.textContent =
+      "Merci de renseigner : " + problems.join(", ") + ".";
     errorElement.scrollIntoView({ behavior: "smooth", block: "center" });
     return;
   }
@@ -470,17 +533,21 @@ async function submitBooking(event: Event) {
         label: file.name,
         zone: zone.value,
         quantity,
+        duration: 45,
       },
     }));
   });
   const models = [
     ...photoModels.map(({ model }) => model),
-    ...galleryController().getModels().map((model) => ({
-      kind: "gallery",
-      label: model.alt,
-      zone: "Galerie",
-      quantity: model.quantity || 1,
-    })),
+    ...galleryController()
+      .getModels()
+      .map((model) => ({
+        kind: "gallery",
+        label: model.alt,
+        zone: "Galerie",
+        quantity: model.quantity || 1,
+        duration: model.durationMinutes,
+      })),
   ];
   const formData = new FormData();
   [
@@ -495,16 +562,22 @@ async function submitBooking(event: Event) {
   formData.set("date", dateToIso(bookingDate.date));
   formData.set("creneau", bookingSlot);
   formData.set("niveau", level);
+  formData.set("duration", String(getEstimatedDuration()));
   formData.set("models", JSON.stringify(models));
   formData.set(
     "tarifAccepted",
-    String(Boolean(form.querySelector<HTMLInputElement>('input[name="tarif"]')?.checked)),
+    String(
+      Boolean(
+        form.querySelector<HTMLInputElement>('input[name="tarif"]')?.checked,
+      ),
+    ),
   );
   formData.set(
     "cancellationAccepted",
     String(
       Boolean(
-        form.querySelector<HTMLInputElement>('input[name="annulation"]')?.checked,
+        form.querySelector<HTMLInputElement>('input[name="annulation"]')
+          ?.checked,
       ),
     ),
   );
@@ -590,14 +663,17 @@ export function initializeBooking(selection: GalleryController) {
       button.classList.add("sel");
       button.setAttribute("aria-selected", "true");
       villeEl.value = ville;
-      placeEl.textContent = `📍 ${ville} – choisissez un jour`;
       slotRequest += 1;
-      buildDays(ville);
+      availabilityKey = null;
+      refreshAvailability();
     });
     villesEl.append(button);
   });
 
   initializePhotoFields();
-  $("#booking").addEventListener("submit", submitBooking);
+  bookingForm.addEventListener("input", refreshAvailability);
+  bookingForm.addEventListener("change", refreshAvailability);
+  bookingForm.addEventListener("submit", submitBooking);
   updateModelRequirement();
+  refreshAvailability();
 }

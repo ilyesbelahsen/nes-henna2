@@ -11,6 +11,7 @@ import {
   MAX_SIZE,
   MAX_TOTAL_FILE_SIZE,
   PORT,
+  isValidDuration,
 } from "./config.js";
 import {
   createCalendarEvent,
@@ -65,10 +66,13 @@ app.get(
     if (!getAvailabilityCalendarId(ville))
       return res.status(400).json({ error: "ville_invalide" });
     const count = Number(req.query.count);
+    const duration = Number(req.query.duree || 30);
     if (!Number.isInteger(count) || count < 1 || count > Number(MAX_DAYS_AHEAD))
       return res.status(400).json({ error: "nombre_jours_invalide" });
+    if (!isValidDuration(duration))
+      return res.status(400).json({ error: "duree_invalide" });
     try {
-      return res.json({ days: await availableDays(ville, count) });
+      return res.json({ days: await availableDays(ville, count, duration) });
     } catch (error) {
       console.error("days:", error.message);
       return res.status(502).json({ error: "calendrier_indisponible" });
@@ -89,8 +93,11 @@ app.get(
     const ville = typeof req.query.ville === "string" ? req.query.ville : "";
     if (!getAvailabilityCalendarId(ville))
       return res.status(400).json({ error: "ville_invalide" });
+    const duration = Number(req.query.duree || 30);
+    if (!isValidDuration(duration))
+      return res.status(400).json({ error: "duree_invalide" });
     try {
-      return res.json({ slots: await freeSlots(day, ville) });
+      return res.json({ slots: await freeSlots(day, ville, duration) });
     } catch (error) {
       console.error("slots:", error.message);
       return res.status(502).json({ error: "calendrier_indisponible" });
@@ -111,8 +118,7 @@ app.post(
       return res.status(400).json({ error: "soumission_invalide" });
     const files = req.files ?? [];
     if (
-      files.reduce((total, file) => total + file.size, 0) >
-      MAX_TOTAL_FILE_SIZE
+      files.reduce((total, file) => total + file.size, 0) > MAX_TOTAL_FILE_SIZE
     ) {
       return res.status(413).json({ error: "fichiers_trop_volumineux" });
     }
@@ -120,7 +126,9 @@ app.post(
     if (!booking) return res.status(400).json({ error: "donnees_invalides" });
     try {
       const start = await withLock(async () =>
-        (await freeSlots(booking.day, booking.ville)).includes(booking.creneau)
+        (
+          await freeSlots(booking.day, booking.ville, booking.duration)
+        ).includes(booking.creneau)
           ? createCalendarEvent(booking, files)
           : null,
       );

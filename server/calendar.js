@@ -2,6 +2,7 @@ import { DateTime } from "luxon";
 import {
   CALENDAR_ID,
   DATE_PATTERN,
+  isValidDuration,
   MAX_DAYS_AHEAD,
   MIN_NOTICE_HOURS,
   PARIS_AVAILABILITY_CALENDAR_ID,
@@ -66,12 +67,18 @@ async function getWindows(from, to, calendarId) {
         event.end?.dateTime,
     )
     .map((event) => ({
-      start: DateTime.max(DateTime.fromISO(event.start.dateTime).setZone(TIMEZONE), from),
-      end: DateTime.min(DateTime.fromISO(event.end.dateTime).setZone(TIMEZONE), to),
+      start: DateTime.max(
+        DateTime.fromISO(event.start.dateTime).setZone(TIMEZONE),
+        from,
+      ),
+      end: DateTime.min(
+        DateTime.fromISO(event.end.dateTime).setZone(TIMEZONE),
+        to,
+      ),
     }));
 }
 
-function getCandidateStarts(day, windows, earliest) {
+function getCandidateStarts(day, windows, earliest, durationMinutes) {
   const found = new Map();
   const dayStart = day.startOf("day");
   const dayEnd = day.endOf("day");
@@ -80,24 +87,22 @@ function getCandidateStarts(day, windows, earliest) {
     const end = DateTime.min(window.end, dayEnd);
     for (
       let time = start;
-      time.plus({ minutes: slotMinutes }) <= end;
+      time.plus({ minutes: durationMinutes }) <= end;
       time = time.plus({ minutes: slotMinutes })
     ) {
       if (time >= earliest) found.set(time.toMillis(), time);
     }
   }
-  return [...found.values()].sort(
-    (a, b) => a.toMillis() - b.toMillis(),
-  );
+  return [...found.values()].sort((a, b) => a.toMillis() - b.toMillis());
 }
 
-function getAvailableSlots(candidates, busy) {
+function getAvailableSlots(candidates, busy, durationMinutes) {
   return candidates
     .filter(
       (start) =>
         !busy.some(
           (item) =>
-            item.start < start.plus({ minutes: slotMinutes }) &&
+            item.start < start.plus({ minutes: durationMinutes }) &&
             item.end > start,
         ),
     )
@@ -110,8 +115,9 @@ function getAvailabilityCalendarIdForCity(ville) {
   return calendarId;
 }
 
-export async function freeSlots(day, ville) {
+export async function freeSlots(day, ville, durationMinutes = 30) {
   const calendarId = getAvailabilityCalendarIdForCity(ville);
+  if (!isValidDuration(durationMinutes)) return [];
   const now = DateTime.now().setZone(TIMEZONE);
   if (
     day < now.startOf("day") ||
@@ -123,15 +129,21 @@ export async function freeSlots(day, ville) {
   const from = day.startOf("day");
   const to = day.endOf("day");
   const windows = await getWindows(from, to, calendarId);
-  const candidates = getCandidateStarts(day, windows, earliest);
+  const candidates = getCandidateStarts(
+    day,
+    windows,
+    earliest,
+    durationMinutes,
+  );
   if (!candidates.length) return [];
 
   const busy = await getBusy(from, to);
-  return getAvailableSlots(candidates, busy);
+  return getAvailableSlots(candidates, busy, durationMinutes);
 }
 
-export async function availableDays(ville, count) {
+export async function availableDays(ville, count, durationMinutes = 30) {
   const calendarId = getAvailabilityCalendarIdForCity(ville);
+  if (!isValidDuration(durationMinutes)) return [];
   if (!Number.isInteger(count) || count < 1 || count > Number(MAX_DAYS_AHEAD))
     throw new Error("nombre_jours_invalide");
 
@@ -150,14 +162,22 @@ export async function availableDays(ville, count) {
   for (let offset = 0; offset < count; offset += 1) {
     const day = from.plus({ days: offset });
     if (day > lastDay) break;
-    const candidates = getCandidateStarts(day, windows, earliest);
+    const candidates = getCandidateStarts(
+      day,
+      windows,
+      earliest,
+      durationMinutes,
+    );
     if (candidates.length) candidatesByDay.set(day.toISODate(), candidates);
   }
   if (!candidatesByDay.size) return [];
 
   const busy = await getBusy(from, to);
   return [...candidatesByDay]
-    .filter(([, candidates]) => getAvailableSlots(candidates, busy).length > 0)
+    .filter(
+      ([, candidates]) =>
+        getAvailableSlots(candidates, busy, durationMinutes).length > 0,
+    )
     .map(([date]) => date);
 }
 
@@ -183,7 +203,7 @@ export async function createCalendarEvent(booking, files) {
         .join("\n"),
       start: { dateTime: start.toISO(), timeZone: TIMEZONE },
       end: {
-        dateTime: start.plus({ minutes: slotMinutes }).toISO(),
+        dateTime: start.plus({ minutes: booking.duration }).toISO(),
         timeZone: TIMEZONE,
       },
     },

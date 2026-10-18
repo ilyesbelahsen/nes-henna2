@@ -1,8 +1,4 @@
-import {
-  GALLERY_PHOTOS,
-  type GalleryPhoto,
-  type Level,
-} from "../data/site";
+import { GALLERY_PHOTOS, type GalleryPhoto, type Level } from "../data/site";
 import { $, $$ } from "./dom";
 import { createQuantityControl } from "./quantity-control";
 import { observeReveal } from "./site-ui";
@@ -48,6 +44,9 @@ export function initializeGallery(
       image.alt = model.alt;
       const name = document.createElement("span");
       name.textContent = model.alt;
+      const duration = document.createElement("small");
+      duration.className = "model-zone";
+      duration.textContent = `Temps : ${model.durationMinutes} min`;
       const quantity = createQuantityControl(model.quantity || 1, (value) => {
         model.quantity = value;
         renderChosenModels();
@@ -60,7 +59,7 @@ export function initializeGallery(
         chosenModels.splice(index, 1);
         renderChosenModels();
       });
-      item.append(image, name, quantity, remove);
+      item.append(image, name, duration, quantity, remove);
       list.append(item);
     });
     onModelsChanged();

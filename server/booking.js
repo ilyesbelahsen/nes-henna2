@@ -1,4 +1,4 @@
-import { TIME_PATTERN } from "./config.js";
+import { isValidDuration, TIME_PATTERN } from "./config.js";
 import { getAvailabilityCalendarId, parseDay } from "./calendar.js";
 
 export function readBooking(body) {
@@ -18,6 +18,7 @@ export function readBooking(body) {
     ].map((key) => [key, String(body[key] ?? "").trim()]),
   );
   const participants = Number(body.participants);
+  const duration = Number(body.duration);
   let models;
   try {
     models = JSON.parse(String(body.models ?? ""));
@@ -40,14 +41,14 @@ export function readBooking(body) {
     getAvailabilityCalendarId(booking.ville) !== null &&
     ["simple", "moyen", "difficile"].includes(booking.niveau) &&
     booking.commentaire.length <= 2000 &&
+    isValidDuration(duration) &&
     Number.isInteger(participants) &&
     participants >= 1 &&
     participants <= 20 &&
     Array.isArray(models) &&
     models.reduce(
       (count, model) =>
-        count +
-        (Number.isInteger(model?.quantity) ? model.quantity : 0),
+        count + (Number.isInteger(model?.quantity) ? model.quantity : 0),
       0,
     ) >= participants &&
     models.length <= 20 &&
@@ -65,12 +66,19 @@ export function readBooking(body) {
         isSingleLine(model.zone) &&
         Number.isInteger(model.quantity) &&
         model.quantity >= 1 &&
-        model.quantity <= 20,
+        model.quantity <= 20 &&
+        Number.isInteger(model.duration) &&
+        ((model.kind === "upload" && model.duration === 45) ||
+          (model.kind === "gallery" && [30, 45, 60].includes(model.duration))),
     ) &&
+    models.reduce(
+      (total, model) => total + model.duration * model.quantity,
+      0,
+    ) === duration &&
     body.tarifAccepted === "true" &&
     body.cancellationAccepted === "true";
   const day = parseDay(booking.date);
   return valid && day
-    ? { ...booking, day, participants, models }
+    ? { ...booking, day, participants, models, duration }
     : null;
 }

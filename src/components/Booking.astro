@@ -16,7 +16,7 @@
                 autocomplete="off"
             /></label>
             <fieldset>
-              <legend>1 · Date et lieu</legend>
+              <legend>1 · Ville</legend>
               <div class="field">
                 <span>Ville</span>
                 <input id="ville" name="ville" type="hidden" required />
@@ -27,27 +27,6 @@
                   aria-label="Choisir une ville"
                 ></div>
               </div>
-              <div
-                class="days"
-                id="days"
-                hidden
-                role="listbox"
-                aria-label="Choisir un jour"
-              ></div>
-              <div
-                class="slots"
-                id="slots"
-                hidden
-                role="listbox"
-                aria-label="Choisir un horaire"
-              ></div>
-              <p class="place" id="place-info" aria-live="polite">
-                Choisissez une ville pour voir les jours disponibles.
-              </p>
-              <p class="fine">
-                L'adresse exacte est communiquée uniquement après validation du
-                rendez-vous.
-              </p>
             </fieldset>
 
             <fieldset>
@@ -90,7 +69,8 @@
               /></label>
             </fieldset>
 
-            <div class="people-choice">
+            <fieldset class="people-choice">
+              <legend>3 · Nombre de personnes</legend>
               <label class="field" for="participants"
                 >Nombre de personnes
                 <input
@@ -111,10 +91,13 @@
                 class="models-requirement"
                 role="alert"
               ></p>
-            </div>
+              <p id="estimated-duration" class="estimated-duration" aria-live="polite">
+                Temps estimé : sélectionnez au moins un modèle.
+              </p>
+            </fieldset>
 
             <fieldset>
-              <legend>3 · Votre modèle</legend>
+              <legend>4 · Votre modèle</legend>
               <div class="model-choice upload-choice">
                 <h3>1. Ajouter un modèle en photo</h3>
                 <div id="photo-fields">
@@ -181,6 +164,31 @@
                   placeholder="Occasion, tenue, couleur de la peau, allergies…"
                 ></textarea>
               </label>
+            </fieldset>
+
+            <fieldset id="availability" hidden>
+              <legend>5 · Disponibilités</legend>
+              <div
+                class="days"
+                id="days"
+                hidden
+                role="listbox"
+                aria-label="Choisir un jour"
+              ></div>
+              <div
+                class="slots"
+                id="slots"
+                hidden
+                role="listbox"
+                aria-label="Choisir un horaire"
+              ></div>
+              <p class="place" id="place-info" aria-live="polite">
+                Complétez les étapes précédentes pour voir les jours disponibles.
+              </p>
+              <p class="fine">
+                L'adresse exacte est communiquée uniquement après validation du
+                rendez-vous.
+              </p>
             </fieldset>
 
             <label class="check"

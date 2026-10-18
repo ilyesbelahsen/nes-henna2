@@ -15,6 +15,7 @@ export default defineConfig({
   vite: {
     server: {
       proxy: {
+        "/days": process.env.BOOKING_SERVER_URL || "http://localhost:3000",
         "/slots": process.env.BOOKING_SERVER_URL || "http://localhost:3000",
         "/book": process.env.BOOKING_SERVER_URL || "http://localhost:3000",
       },
