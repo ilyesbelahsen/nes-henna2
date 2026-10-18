@@ -28,7 +28,7 @@ export const SITE_CONFIG: Readonly<SiteConfig> = Object.freeze({
   whatsapp: "33783365435",
   instagram: "https://www.instagram.com/",
   tiktok: "https://www.tiktok.com/",
-  prix: Object.freeze({ simple: 15, moyen: 30, difficile: 60 }),
+  prix: Object.freeze({ simple: 6, moyen: 8, difficile: 10 }),
   duree: Object.freeze({ simple: 30, moyen: 60, difficile: 120 }),
   villes: Object.freeze(["Paris", "Perpignan", "Toulouse"]),
   horaires: Object.freeze([
