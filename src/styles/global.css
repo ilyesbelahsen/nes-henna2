@@ -675,7 +675,10 @@ html[data-photos="visible"] .price-photo {
   white-space: nowrap;
 }
 .booking fieldset {
-  border: 0;
+  border: 1px solid #f3d4dc;
+  border-radius: 18px;
+  background: #fffafb;
+  padding: 1rem;
   margin-bottom: 1.6rem;
 }
 .booking legend {
@@ -779,14 +782,16 @@ html[data-photos="visible"] .price-photo {
 }
 .people-choice {
   margin: 1rem 0;
-  padding: 1rem;
-  border: 1px solid #f3d4dc;
-  border-radius: 18px;
-  background: #fffafb;
 }
 .people-choice .field {
   max-width: 18rem;
   margin-bottom: 0.3rem;
+}
+.comment-choice {
+  padding: 1rem;
+  border: 1px solid #f3d4dc;
+  border-radius: 18px;
+  background: #fffafb;
 }
 .people-choice input:disabled {
   cursor: not-allowed;
