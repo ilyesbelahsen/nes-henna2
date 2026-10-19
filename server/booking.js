@@ -34,8 +34,8 @@ export function readBooking(body) {
     booking.prenom.length > 0 &&
     booking.prenom.length <= 80 &&
     isSingleLine(booking.prenom) &&
-    /^[+\d][\d \t().-]{5,20}$/.test(booking.telephone) &&
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(booking.email) &&
+    /^0[67]\d{8}$/.test(booking.telephone) &&
+    /^[^\s@]+@[^\s@]+\.[A-Za-z]{2,}$/.test(booking.email) &&
     booking.email.length <= 120 &&
     TIME_PATTERN.test(booking.creneau) &&
     getAvailabilityCalendarId(booking.ville) !== null &&

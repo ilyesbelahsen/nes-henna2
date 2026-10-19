@@ -54,8 +54,9 @@
                   type="tel"
                   inputmode="tel"
                   autocomplete="tel"
-                  placeholder="06 12 34 56 78"
-                  maxlength="21"
+                  placeholder="07XXXXXXXX"
+                  pattern="0[67][0-9]{8}"
+                  maxlength="10"
                   required
               /></label>
               <label class="field"
@@ -63,6 +64,7 @@
                   name="email"
                   type="email"
                   autocomplete="email"
+                  pattern="[^\s@]+@[^\s@]+\.[A-Za-z]{2,}"
                   maxlength="120"
                   required
               /></label>
@@ -75,9 +77,10 @@
                 <input
                   id="participants"
                   name="participants"
-                  type="number"
-                  min="1"
-                  step="1"
+                  type="text"
+                  inputmode="numeric"
+                  pattern="[0-9]*"
+                  autocomplete="off"
                   value="1"
                   required
                 />
@@ -90,9 +93,6 @@
                 class="models-requirement"
                 role="alert"
               ></p>
-              <p id="estimated-duration" class="estimated-duration" aria-live="polite">
-                Temps estimé : sélectionnez au moins un modèle.
-              </p>
             </fieldset>
 
             <fieldset>
@@ -157,6 +157,9 @@
                   <div id="chosen-list" class="chosen-list"></div>
                 </div>
               </div>
+              <p id="estimated-duration" class="estimated-duration" aria-live="polite">
+                Temps estimé : sélectionnez au moins un modèle.
+              </p>
             </fieldset>
 
             <fieldset id="availability" hidden>

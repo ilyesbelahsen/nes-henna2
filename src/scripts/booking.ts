@@ -78,6 +78,7 @@ async function selectDay(
   button.classList.add("sel");
   selectedDate = { date, lieu };
   selectedSlot = null;
+  updateModelRequirement();
   const requestId = ++slotRequest;
   slotsEl.hidden = false;
   slotsEl.textContent = "Chargement des créneaux…";
@@ -136,6 +137,7 @@ function renderSlots(date: Date, lieu: string, slots: string[]) {
       button.classList.add("sel");
       selectedDate = { date, lieu };
       selectedSlot = slot;
+      updateModelRequirement();
     });
     slotsEl.append(button);
   });
@@ -313,10 +315,18 @@ export function updateModelRequirement() {
   const submit = $<HTMLButtonElement>("#booking-submit");
   const modelCount = getModelCount();
   const peopleCount = Math.max(1, Number(peopleInput.value) || 1);
-  peopleInput.value = String(peopleCount);
   const missing = peopleCount - modelCount;
+  const hasRequiredContact = ["prenom", "nom", "telephone", "email"].every(
+    (name) => {
+      const field = bookingForm.elements.namedItem(name);
+      return field instanceof HTMLInputElement && field.value.trim().length > 0;
+    },
+  );
+  const hasRequiredConsents = ["tarif", "annulation"].every((name) => {
+    const field = bookingForm.elements.namedItem(name);
+    return field instanceof HTMLInputElement && field.checked;
+  });
   help.textContent = `${modelCount} modèle${modelCount > 1 ? "s" : ""} sélectionné${modelCount > 1 ? "s" : ""} pour ${peopleCount} personne${peopleCount > 1 ? "s" : ""}.`;
-  submit.disabled = missing > 0 || isSubmitting;
   requirement.hidden = missing <= 0;
   const estimatedDuration = $("#estimated-duration");
   requirement.textContent =
@@ -328,13 +338,19 @@ export function updateModelRequirement() {
       ? `Temps estimé : ${formatDuration(getEstimatedDuration())}`
       : "Temps estimé : sélectionnez au moins un modèle.";
   refreshAvailability();
+  submit.disabled =
+    missing > 0 ||
+    !selectedDate ||
+    !selectedSlot ||
+    !hasRequiredContact ||
+    !hasRequiredConsents ||
+    isSubmitting;
 }
 
 function initializePhotoFields() {
   $("#participants").addEventListener("input", (event) => {
     const input = event.currentTarget as HTMLInputElement;
-    const value = Number(input.value);
-    if (value < 1) input.value = "1";
+    input.value = input.value.replace(/\D/g, "");
     updateModelRequirement();
   });
 
@@ -453,9 +469,11 @@ async function submitBooking(event: Event) {
     );
   if (!value("prenom") || !value("nom"))
     problems.push("votre prénom et votre nom");
-  if (!/^[+\d][\d\s.()-]{7,}$/.test(value("telephone")))
-    problems.push("un numéro WhatsApp valide");
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value("email")))
+  if (!/^0[67]\d{8}$/.test(value("telephone")))
+    problems.push(
+      "un numéro WhatsApp valide (10 chiffres, par exemple 0123456789)",
+    );
+  if (!/^[^\s@]+@[^\s@]+\.[A-Za-z]{2,}$/.test(value("email")))
     problems.push("une adresse e-mail valide");
   if (!selectedDate || !selectedSlot) problems.push("un jour et un horaire");
   const tarif = form.querySelector<HTMLInputElement>('input[name="tarif"]');
@@ -615,14 +633,14 @@ export function initializeBooking(selection: GalleryController) {
       villeEl.value = ville;
       slotRequest += 1;
       availabilityKey = null;
-      refreshAvailability();
+      updateModelRequirement();
     });
     villesEl.append(button);
   });
 
   initializePhotoFields();
-  bookingForm.addEventListener("input", refreshAvailability);
-  bookingForm.addEventListener("change", refreshAvailability);
+  bookingForm.addEventListener("input", updateModelRequirement);
+  bookingForm.addEventListener("change", updateModelRequirement);
   bookingForm.addEventListener("submit", submitBooking);
   updateModelRequirement();
   refreshAvailability();

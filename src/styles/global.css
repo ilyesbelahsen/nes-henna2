@@ -803,6 +803,14 @@ html[data-photos="visible"] .price-photo {
   font-size: 0.84rem;
   font-weight: 600;
 }
+.estimated-duration {
+  margin: 1.2rem 0 0;
+  padding: 0.85rem 1rem;
+  border-top: 1px solid #f3d4dc;
+  color: var(--crimson);
+  font-weight: 600;
+  text-align: center;
+}
 #booking-submit:disabled {
   opacity: 0.5;
   cursor: not-allowed;
