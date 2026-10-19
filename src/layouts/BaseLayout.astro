@@ -10,8 +10,11 @@ const {
   title = "Nes Henna – Prestation de henné · Réservez votre rendez-vous",
   description = "Nes Henna, hennaya : henné naturel pour mariages, fêtes et envies du quotidien. Découvrez les réalisations, les tarifs et réservez votre créneau en ligne.",
 } = Astro.props;
-const canonical = new URL(Astro.url.pathname, Astro.site);
-const baseUrl = import.meta.env.BASE_URL.endsWith("/")
+const cleanPath = Astro.url.pathname
+  .replace(/\/index\.html$/, "/")
+  .replace(/\.html$/, "")
+  .replace(/(.+)\/$/, "$1");
+const canonical = new URL(cleanPath, Astro.site);const baseUrl = import.meta.env.BASE_URL.endsWith("/")
   ? import.meta.env.BASE_URL
   : `${import.meta.env.BASE_URL}/`;
 const logoUrl = new URL(`${baseUrl}assets/logo.png`, Astro.site);
