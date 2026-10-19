@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://ilyesbelahsen.github.io/nes-henna2/sitemap-index.xml
+Sitemap: https://nes-henna.fr/sitemap-index.xml

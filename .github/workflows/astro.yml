@@ -12,6 +12,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
+      SITE_URL: ${{ vars.SITE_URL }}
+      BASE_PATH: ${{ vars.BASE_PATH }}
       PUBLIC_BOOKING_API_URL: ${{ vars.PUBLIC_BOOKING_API_URL }}
     steps:
       - uses: actions/checkout@v4
@@ -19,17 +21,6 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - name: Configure GitHub Pages paths
-        run: |
-          owner="${GITHUB_REPOSITORY_OWNER}"
-          repository="${GITHUB_REPOSITORY#*/}"
-          if [[ "$repository" == "$owner.github.io" ]]; then
-            base_path="/"
-          else
-            base_path="/$repository"
-          fi
-          echo "SITE_URL=https://${owner}.github.io" >> "$GITHUB_ENV"
-          echo "BASE_PATH=${base_path}" >> "$GITHUB_ENV"
       - run: npm ci
       - run: npm run check
       - run: npm run build
