@@ -30,8 +30,10 @@ const allowedOrigins = ALLOWED_ORIGIN.split(",")
   .map((origin) => origin.trim())
   .filter(Boolean);
 const localOrigin = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
+
 const isAllowedOrigin = (origin) =>
-  allowedOrigins.includes(origin) || localOrigin.test(origin);
+  allowedOrigins.includes(origin) ||
+  (process.env.NODE_ENV !== "production" && localOrigin.test(origin));
 app.use((req, res, next) => {
   const origin = req.get("origin");
   if (origin && !isAllowedOrigin(origin))
@@ -124,6 +126,13 @@ app.post(
     }
     const booking = readBooking(req.body);
     if (!booking) return res.status(400).json({ error: "donnees_invalides" });
+
+    const uploadCount = booking.models.filter(
+      (model) => model.kind === "upload",
+    ).length;
+    if (uploadCount !== files.length)
+      return res.status(400).json({ error: "photos_invalides" });
+
     try {
       const start = await withLock(async () =>
         (
