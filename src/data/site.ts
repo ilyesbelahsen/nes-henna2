@@ -118,6 +118,12 @@ export const GALLERY_PHOTOS: readonly GalleryPhoto[] = Object.freeze([
     durationMinutes: MODEL_DURATIONS.moyen,
     alt: "Femmes avec motifs de henne",
   },
+  {
+    src: "/assets/henne_mehendi.webp",
+    niveau: "moyen",
+    durationMinutes: MODEL_DURATIONS.moyen,
+    alt: "Motif de mehndi sur la main",
+  },
 ]);
 
 export const LEVEL_LABELS: Readonly<Record<Level, string>> = Object.freeze({
