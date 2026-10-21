@@ -1,9 +1,6 @@
 import EmblaCarousel from "embla-carousel";
 import AutoScroll from "embla-carousel-auto-scroll";
-import {
-  SITE_CONFIG,
-  type Level,
-} from "../data/site";
+import { SITE_CONFIG, type Level } from "../data/site";
 import { $, $$, waLink } from "./dom";
 
 let revealObserver: IntersectionObserver | null = null;
@@ -75,26 +72,21 @@ function initializeReviewsMarquee() {
     track.append(clone);
   });
 
-  EmblaCarousel(
-    viewport,
-    { align: "start", dragFree: true, loop: true },
-    [
-      AutoScroll({
-        active: !matchMedia("(prefers-reduced-motion: reduce)").matches,
-        speed: 1,
-        startDelay: 0,
-        stopOnInteraction: false,
-      }),
-    ],
-  );
+  EmblaCarousel(viewport, { align: "start", dragFree: true, loop: true }, [
+    AutoScroll({
+      active: !matchMedia("(prefers-reduced-motion: reduce)").matches,
+      speed: 1,
+      startDelay: 0,
+      stopOnInteraction: false,
+    }),
+  ]);
 }
 
 const TEXTES = {
   mentions: `<h3>Mentions légales</h3>
-    <p><b>Éditeur :</b> Nes Henna – [Nom, forme juridique, SIRET à compléter]</p>
-    <p><b>Contact :</b> [e-mail / téléphone à compléter]</p>
-    <p><b>Hébergeur :</b> [nom et adresse de l'hébergeur à compléter]</p>
-    <p><b>Crédits photos :</b> photos d'illustration issues d'Unsplash, à remplacer par vos réalisations.</p>`,
+    <p><b>Éditeur :</b> Nes Henna</p>
+    <p><b>Contact :</b> contact@nes-henna.fr</p>
+    <p><b>Hébergement :</b> le site est publié via GitHub Pages, son serveur de réservation est hébergé par Render et son nom de domaine est géré par OVH.</p>`,
   cgv: `<h3>Réservation & annulation</h3>
     <ul>
       <li>Toute demande est confirmée une fois le créneau validé par Nes Henna sur WhatsApp.</li>
@@ -106,7 +98,7 @@ const TEXTES = {
   privacy: `<h3>Politique de confidentialité</h3>
     <p>Ce site ne dépose aucun cookie publicitaire ni de suivi. Il mémorise uniquement, sur votre appareil, votre préférence d'affichage de la galerie (photos visibles ou floutées).</p>
     <p>Les informations et photos envoyées dans le formulaire servent uniquement à traiter votre demande de rendez-vous. Elles sont transmises au serveur de réservation, à Google Calendar et, si l'envoi d'e-mails est configuré, au service de messagerie. Elles ne sont pas revendues.</p>
-    <p>Vous pouvez demander la suppression de vos données à tout moment en écrivant à [e-mail à compléter].</p>`,
+    <p>Vous pouvez demander la suppression de vos données à tout moment en écrivant à contact@nes-henna.fr.</p>`,
 };
 
 function openModal(html: string) {
