@@ -513,6 +513,7 @@ async function submitBooking(event: Event) {
       .map((model) => ({
         kind: "gallery",
         label: model.alt,
+        src: model.src,
         zone: "Galerie",
         quantity: model.quantity || 1,
         duration: model.durationMinutes,

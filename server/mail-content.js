@@ -38,6 +38,12 @@ function phoneHref(phone) {
   return digits ? `tel:${digits}` : null;
 }
 
+function whatsappHref(phone, message) {
+  const digits = String(phone ?? "").replace(/\D/g, "");
+  if (!/^0[67]\d{8}$/.test(digits)) return null;
+  return `https://wa.me/33${digits.slice(1)}?text=${encodeURIComponent(message)}`;
+}
+
 function tableRow(label, valueHtml) {
   return `<tr><th align="left" valign="top" style="padding:6px 16px 6px 0;color:${COLORS.muted};font-weight:600;white-space:nowrap">${label}</th><td style="padding:6px 0">${valueHtml}</td></tr>`;
 }
@@ -70,6 +76,8 @@ export function buildBookingEmailContent(booking, when, files) {
   const people = plural(booking.participants, "personne");
   const photos = files.length > 0 ? plural(files.length, "photo") : null;
   const comment = booking.commentaire?.trim() || "";
+  const whatsappMessage = `Bonjour ${booking.prenom}, je vous contacte concernant votre demande de rendez-vous du ${when} à ${booking.ville}.`;
+  const whatsapp = whatsappHref(booking.telephone, whatsappMessage);
 
   // ---------- Version texte ----------
   const lines = [
@@ -82,23 +90,25 @@ export function buildBookingEmailContent(booking, when, files) {
     `Date : ${when}`,
     `Ville : ${booking.ville}`,
     `Nombre de personnes : ${booking.participants}`,
-    `Niveau souhaité : ${booking.niveau}`,
     "",
     "COORDONNÉES",
     `Nom : ${fullName}`,
     `Téléphone : ${booking.telephone}`,
     `E-mail : ${booking.email}`,
     "Pour lui répondre, utilisez simplement « Répondre » sur cet e-mail.",
+    ...(whatsapp ? [`Répondre sur WhatsApp : ${whatsapp}`] : []),
     "",
     `MODÈLES (${modelCount})`,
     ...models.map((model, index) => {
       const photo = model.filename
         ? ` — fichier joint : ${model.filename}`
         : "";
+      const galleryImage = model.src ? `\n   Image galerie : ${model.src}` : "";
       return [
         `${index + 1}. ${modelType(model)} : ${model.label}`,
         `   Partie du corps : ${model.zone}`,
         `   Quantité : ${model.quantity}${photo}`,
+        galleryImage,
       ].join("\n");
     }),
     "",
@@ -113,7 +123,10 @@ export function buildBookingEmailContent(booking, when, files) {
       const photo = model.filename
         ? `<br><span style="color:${COLORS.muted}">Photo jointe : ${escapeHtml(model.filename)}</span>`
         : "";
-      return `<li style="margin:0 0 12px"><strong>${escapeHtml(modelType(model))} : ${escapeHtml(model.label)}</strong><br>Partie du corps : ${escapeHtml(model.zone)}<br>Quantité : ${escapeHtml(model.quantity)}${photo}</li>`;
+      const galleryImage = model.src
+        ? `<br><a href="${escapeHtml(model.src)}" style="color:${COLORS.title}">Voir l'image du modèle</a>`
+        : "";
+      return `<li style="margin:0 0 12px"><strong>${escapeHtml(modelType(model))} : ${escapeHtml(model.label)}</strong><br>Partie du corps : ${escapeHtml(model.zone)}<br>Quantité : ${escapeHtml(model.quantity)}${photo}${galleryImage}</li>`;
     })
     .join("");
 
@@ -122,6 +135,9 @@ export function buildBookingEmailContent(booking, when, files) {
   const phoneHtml = href
     ? `<a href="${escapeHtml(href)}" style="color:${COLORS.title}">${phone}</a>`
     : phone;
+  const whatsappHtml = whatsapp
+    ? `<p style="margin:20px 0 0"><a href="${escapeHtml(whatsapp)}" style="display:inline-block;padding:10px 16px;border-radius:8px;background:#25d366;color:#fff;text-decoration:none;font-weight:700">Répondre au client sur WhatsApp</a></p>`
+    : "";
 
   const commentHtml = comment
     ? escapeHtml(comment).replace(/\r?\n/g, "<br>")
@@ -132,10 +148,11 @@ export function buildBookingEmailContent(booking, when, files) {
 <p style="margin:0 0 4px"><strong>${escapeHtml(fullName)}</strong> demande un rendez-vous le <strong>${escapeHtml(when)}</strong> à <strong>${escapeHtml(booking.ville)}</strong>.</p>
 <p style="margin:0;color:${COLORS.muted}">Pensez à la recontacter pour confirmer le créneau.</p>
 ${sectionTitle("Rendez-vous")}
-<table style="border-collapse:collapse">${tableRow("Date", escapeHtml(when))}${tableRow("Ville", escapeHtml(booking.ville))}${tableRow("Personnes", escapeHtml(booking.participants))}${tableRow("Niveau souhaité", escapeHtml(booking.niveau))}</table>
+<table style="border-collapse:collapse">${tableRow("Date", escapeHtml(when))}${tableRow("Ville", escapeHtml(booking.ville))}${tableRow("Personnes", escapeHtml(booking.participants))}</table>
 ${sectionTitle("Coordonnées")}
 <table style="border-collapse:collapse">${tableRow("Nom", escapeHtml(fullName))}${tableRow("Téléphone", phoneHtml)}${tableRow("E-mail", escapeHtml(booking.email))}</table>
 <p style="margin:8px 0 0;color:${COLORS.muted};font-size:14px">Pour lui répondre, utilisez simplement « Répondre » sur cet e-mail.</p>
+${whatsappHtml}
 ${sectionTitle(`Modèles (${escapeHtml(modelCount)})`)}
 <ol style="margin:0;padding-left:20px">${modelItems}</ol>
 ${sectionTitle("Commentaire")}

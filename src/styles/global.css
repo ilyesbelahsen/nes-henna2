@@ -692,7 +692,7 @@ html[data-photos="visible"] .price-photo {
 .slots,
 .cities {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(58px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(68px, 1fr));
   gap: 0.55rem;
   overflow: visible;
   padding: 0.2rem 0 0.6rem;
@@ -748,7 +748,12 @@ html[data-photos="visible"] .price-photo {
   color: var(--ink);
 }
 .slot {
-  padding: 0.6rem 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0.6rem 0.35rem;
+  text-align: center;
 }
 .city {
   padding: 0.75rem 1.1rem;

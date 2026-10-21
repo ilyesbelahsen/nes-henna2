@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { DateTime } from "luxon";
 
-process.env.GOOGLE_CLIENT_EMAIL ??= "booking-tests@example.iam.gserviceaccount.com";
+process.env.GOOGLE_CLIENT_EMAIL ??=
+  "booking-tests@example.iam.gserviceaccount.com";
 process.env.GOOGLE_PRIVATE_KEY ??= "test-key";
 process.env.CALENDAR_ID ??= "booking-calendar";
 process.env.TOULOUSE_AVAILABILITY_CALENDAR_ID = "toulouse-availability";
@@ -29,9 +30,23 @@ const validRequest = () => ({
   niveau: "simple",
   commentaire: "",
   participants: "2",
+  duration: "75",
   models: JSON.stringify([
-    { kind: "gallery", label: "Motif floral", zone: "Galerie", quantity: 1 },
-    { kind: "upload", label: "modele.png", zone: "Paume", quantity: 1 },
+    {
+      kind: "gallery",
+      label: "Motif floral",
+      src: "/assets/henne_mehendi.webp",
+      zone: "Galerie",
+      quantity: 1,
+      duration: 30,
+    },
+    {
+      kind: "upload",
+      label: "modele.png",
+      zone: "Paume",
+      quantity: 1,
+      duration: 45,
+    },
   ]),
   tarifAccepted: "true",
   cancellationAccepted: "true",
@@ -63,6 +78,7 @@ test("rejects invalid contact details, missing consent, and insufficient models"
           label: "Motif floral",
           zone: "Galerie",
           quantity: 1,
+          duration: 30,
         },
       ]),
     }),
@@ -72,7 +88,10 @@ test("rejects invalid contact details, missing consent, and insufficient models"
 
 test("loads availability from the calendar selected by city", async (t) => {
   const requestedCalendars = [];
-  const testDay = DateTime.now().setZone("Europe/Paris").plus({ days: 7 }).startOf("day");
+  const testDay = DateTime.now()
+    .setZone("Europe/Paris")
+    .plus({ days: 7 })
+    .startOf("day");
   t.mock.method(calendar.events, "list", async ({ calendarId }) => {
     requestedCalendars.push(calendarId);
     return {
@@ -96,10 +115,12 @@ test("loads availability from the calendar selected by city", async (t) => {
     ["Perpignan", "perpignan-availability"],
   ]) {
     assert.equal(getAvailabilityCalendarId(ville), calendarId);
-    assert.deepEqual(
-      await freeSlots(parseDay(testDay.toISODate()), ville),
-      ["10:00", "11:00"],
-    );
+    assert.deepEqual(await freeSlots(parseDay(testDay.toISODate()), ville), [
+      "10:00",
+      "10:30",
+      "11:00",
+      "11:30",
+    ]);
   }
 
   assert.deepEqual(requestedCalendars, [
@@ -128,17 +149,30 @@ test("includes uploaded photo body zones and gallery models in the email", () =>
   assert.match(text, /Partie du corps : Paume/);
   assert.match(text, /fichier joint : modele-main\.png/);
   assert.match(text, /Modèle de la galerie : Motif floral/);
+  assert.match(
+    text,
+    /Répondre sur WhatsApp : https:\/\/wa\.me\/33612345678\?text=/,
+  );
   assert.match(text, /Partie du corps : Galerie/);
   assert.match(html, /Partie du corps : Paume/);
   assert.match(html, /Motif floral/);
+  assert.match(html, /https:\/\/wa\.me\/33612345678\?text=/);
+  assert.match(html, /Répondre au client sur WhatsApp/);
 });
 
 test("escapes email HTML and rejects mismatched model photos", () => {
   const booking = readBooking({
     ...validRequest(),
     models: JSON.stringify([
-      { kind: "gallery", label: "<script>", zone: "Galerie", quantity: 2 },
+      {
+        kind: "gallery",
+        label: "<script>",
+        zone: "Galerie",
+        quantity: 2,
+        duration: 30,
+      },
     ]),
+    duration: "60",
   });
   const content = buildBookingEmailContent(
     { ...booking, commentaire: "<img src=x>" },
@@ -149,7 +183,10 @@ test("escapes email HTML and rejects mismatched model photos", () => {
   assert.match(content.html, /&lt;script&gt;/);
   assert.match(content.html, /&lt;img src=x&gt;/);
   assert.throws(
-    () => buildBookingEmailContent(booking, "date", [{ originalname: "extra.png" }]),
+    () =>
+      buildBookingEmailContent(booking, "date", [
+        { originalname: "extra.png" },
+      ]),
     /ne correspondent pas/,
   );
 });

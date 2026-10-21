@@ -61,6 +61,11 @@ export function readBooking(body) {
         model.label.length > 0 &&
         model.label.length <= 200 &&
         isSingleLine(model.label) &&
+        (model.kind === "upload" ||
+          model.src === undefined ||
+          (typeof model.src === "string" &&
+            model.src.length <= 2048 &&
+            /^https:\/\/|^\/assets\//.test(model.src))) &&
         typeof model.zone === "string" &&
         model.zone.length <= 80 &&
         isSingleLine(model.zone) &&
