@@ -26,7 +26,7 @@ export const MODEL_DURATIONS: Readonly<Record<Level, number>> = Object.freeze({
 
 export const SITE_CONFIG: Readonly<SiteConfig> = Object.freeze({
   whatsapp: "33767274210",
-  instagram: "https://www.instagram.com/",
+  instagram: "https://www.instagram.com/nes_henna/",
   tiktok: "https://www.tiktok.com/",
   prix: Object.freeze({ simple: 6, moyen: 8, difficile: 10 }),
   duree: Object.freeze({ simple: 30, moyen: 60, difficile: 120 }),
