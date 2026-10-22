@@ -97,9 +97,17 @@ export function initializeGallery(
   );
 
   const examples: Record<Level, GalleryPhoto> = {
-    simple: GALLERY_PHOTOS[3],
-    moyen: GALLERY_PHOTOS[0],
-    difficile: GALLERY_PHOTOS[8],
+    simple: GALLERY_PHOTOS.find(
+      (photo) =>
+        photo.src === `/assets/${encodeURIComponent("simple0 (2).jpeg")}`,
+    )!,
+    moyen: GALLERY_PHOTOS.find(
+      (photo) => photo.src === `/assets/${encodeURIComponent("moyen0.jpeg")}`,
+    )!,
+    difficile: GALLERY_PHOTOS.find(
+      (photo) =>
+        photo.src === `/assets/${encodeURIComponent("difficile2.jpeg")}`,
+    )!,
   };
   $$(".price-photo").forEach((element) => {
     const level = element.dataset.photo as Level;

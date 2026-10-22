@@ -42,88 +42,83 @@ export const SITE_CONFIG: Readonly<SiteConfig> = Object.freeze({
   joursAffiches: 14,
 });
 
-const buildPhotoUrl = (id: string) =>
-  `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&q=70&w=700`;
+const buildLocalPhoto = (
+  filename: string,
+  niveau: Level,
+  alt: string,
+): GalleryPhoto => ({
+  src: `/assets/${encodeURIComponent(filename)}`,
+  niveau,
+  durationMinutes: MODEL_DURATIONS[niveau],
+  alt,
+});
 
 export const GALLERY_PHOTOS: readonly GalleryPhoto[] = Object.freeze([
-  {
-    src: buildPhotoUrl("1572969147844-920fff94e326"),
-    niveau: "moyen",
-    durationMinutes: MODEL_DURATIONS.moyen,
-    alt: "Henne sur la main tenant des roses blanches",
-  },
-  {
-    src: buildPhotoUrl("1720798299236-7acaaa2356be"),
-    niveau: "difficile",
-    durationMinutes: MODEL_DURATIONS.difficile,
-    alt: "Mains avec motifs de henne detailles",
-  },
-  {
-    src: buildPhotoUrl("1525135850648-b42365991054"),
-    niveau: "moyen",
-    durationMinutes: MODEL_DURATIONS.moyen,
-    alt: "Motif de henne sur la main",
-  },
-  {
-    src: buildPhotoUrl("1566829682463-2aa5f6c8afd8"),
-    niveau: "simple",
-    durationMinutes: MODEL_DURATIONS.simple,
-    alt: "Motif floral de henne sur la main",
-  },
-  {
-    src: buildPhotoUrl("1564809392273-798ebbb1914a"),
-    niveau: "difficile",
-    durationMinutes: MODEL_DURATIONS.difficile,
-    alt: "Henne floral sur le bras",
-  },
-  {
-    src: buildPhotoUrl("1716672042560-c59ebb0805e6"),
-    niveau: "moyen",
-    durationMinutes: MODEL_DURATIONS.moyen,
-    alt: "Gros plan de mains au henne",
-  },
-  {
-    src: buildPhotoUrl("1566745265763-de510bdae868"),
-    niveau: "simple",
-    durationMinutes: MODEL_DURATIONS.simple,
-    alt: "Henne fin sur la main",
-  },
-  {
-    src: buildPhotoUrl("1556536088-f010a312a8d3"),
-    niveau: "moyen",
-    durationMinutes: MODEL_DURATIONS.moyen,
-    alt: "Motif de mehndi",
-  },
-  {
-    src: buildPhotoUrl("1565368114375-ba1a4db7099f"),
-    niveau: "difficile",
-    durationMinutes: MODEL_DURATIONS.difficile,
-    alt: "Henne de mariee",
-  },
-  {
-    src: buildPhotoUrl("1505932794465-147d1f1b2c97"),
-    niveau: "difficile",
-    durationMinutes: MODEL_DURATIONS.difficile,
-    alt: "Groupe de mains decorees au henne",
-  },
-  {
-    src: buildPhotoUrl("1530785404354-f4ed0206a0d1"),
-    niveau: "simple",
-    durationMinutes: MODEL_DURATIONS.simple,
-    alt: "Henne sur le bras",
-  },
-  {
-    src: buildPhotoUrl("1514178703120-3fa66528901d"),
-    niveau: "moyen",
-    durationMinutes: MODEL_DURATIONS.moyen,
-    alt: "Femmes avec motifs de henne",
-  },
-  {
-    src: "/assets/henne_mehendi.webp",
-    niveau: "moyen",
-    durationMinutes: MODEL_DURATIONS.moyen,
-    alt: "Motif de mehndi sur la main",
-  },
+  buildLocalPhoto("simple.jpeg", "simple", "Motif de henne simple"),
+  buildLocalPhoto("simple (2).jpeg", "simple", "Motif de henne simple"),
+  buildLocalPhoto("simple0.jpeg", "simple", "Motif de henne simple"),
+  buildLocalPhoto("simple0 (2).jpeg", "simple", "Motif de henne simple"),
+  buildLocalPhoto("simple1.jpeg", "simple", "Motif de henne simple"),
+  buildLocalPhoto("moyen.jpeg", "moyen", "Motif de henne de niveau moyen"),
+  buildLocalPhoto("moyen (2).jpeg", "moyen", "Motif de henne de niveau moyen"),
+  buildLocalPhoto("moyen (3).jpeg", "moyen", "Motif de henne de niveau moyen"),
+  buildLocalPhoto("moyen (4).jpeg", "moyen", "Motif de henne de niveau moyen"),
+  buildLocalPhoto("moyen0.jpeg", "moyen", "Motif de henne de niveau moyen"),
+  buildLocalPhoto("moyen1.jpeg", "moyen", "Motif de henne de niveau moyen"),
+  buildLocalPhoto("difficile.jpeg", "difficile", "Motif de henne difficile"),
+  buildLocalPhoto(
+    "difficile (2).jpeg",
+    "difficile",
+    "Motif de henne difficile",
+  ),
+  buildLocalPhoto(
+    "difficile (3).jpeg",
+    "difficile",
+    "Motif de henne difficile",
+  ),
+  buildLocalPhoto(
+    "difficile (4).jpeg",
+    "difficile",
+    "Motif de henne difficile",
+  ),
+  buildLocalPhoto("difficile0.jpeg", "difficile", "Motif de henne difficile"),
+  buildLocalPhoto(
+    "difficile0 (2).jpeg",
+    "difficile",
+    "Motif de henne difficile",
+  ),
+  buildLocalPhoto("difficile1.jpeg", "difficile", "Motif de henne difficile"),
+  buildLocalPhoto(
+    "difficile1 (2).jpeg",
+    "difficile",
+    "Motif de henne difficile",
+  ),
+  buildLocalPhoto(
+    "difficile1 (3).jpeg",
+    "difficile",
+    "Motif de henne difficile",
+  ),
+  buildLocalPhoto("difficile2.jpeg", "difficile", "Motif de henne difficile"),
+  buildLocalPhoto(
+    "difficile2 (2).jpeg",
+    "difficile",
+    "Motif de henne difficile",
+  ),
+  buildLocalPhoto(
+    "difficile2 (3).jpeg",
+    "difficile",
+    "Motif de henne difficile",
+  ),
+  buildLocalPhoto(
+    "difficile2 (4).jpeg",
+    "difficile",
+    "Motif de henne difficile",
+  ),
+  buildLocalPhoto(
+    "difficile2 (5).jpeg",
+    "difficile",
+    "Motif de henne difficile",
+  ),
 ]);
 
 export const LEVEL_LABELS: Readonly<Record<Level, string>> = Object.freeze({
