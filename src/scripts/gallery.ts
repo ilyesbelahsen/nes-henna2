@@ -1,7 +1,6 @@
 import { GALLERY_PHOTOS, type GalleryPhoto, type Level } from "../data/site";
 import { $, $$ } from "./dom";
 import { createQuantityControl } from "./quantity-control";
-import { observeReveal } from "./site-ui";
 
 export interface GalleryModel extends GalleryPhoto {
   quantity: number;
@@ -65,11 +64,47 @@ export function initializeGallery(
     onModelsChanged();
   }
 
+  const gallery = $("#gallery");
+  const galleryItems = $$(".g-item");
+  const columnCount = matchMedia("(min-width: 980px)").matches
+    ? 4
+    : matchMedia("(min-width: 760px)").matches
+      ? 3
+      : 2;
+  const galleryColumns = Array.from({ length: columnCount }, () => {
+    const column = document.createElement("div");
+    column.className = "gallery-column";
+    return column;
+  });
+  gallery.replaceChildren(...galleryColumns);
+  const columnHeights = galleryColumns.map(() => 0);
+  const columnGap = 14.4;
+  galleryItems.forEach((item) => {
+    const columnIndex = columnHeights.indexOf(Math.min(...columnHeights));
+    const image = item.querySelector<HTMLImageElement>("img");
+    galleryColumns[columnIndex].append(item);
+    const naturalRatio =
+      image?.naturalWidth && image.naturalHeight
+        ? image.naturalHeight / image.naturalWidth
+        : 1.2;
+    const columnWidth =
+      galleryColumns[columnIndex].getBoundingClientRect().width;
+    columnHeights[columnIndex] += columnWidth * naturalRatio + columnGap;
+  });
+
   GALLERY_PHOTOS.forEach((photo, index) => {
     const item = document.querySelector<HTMLElement>(
       `.g-item[data-index="${index}"]`,
     );
     if (!item) return;
+    const revealGalleryItems = () => {
+      galleryItems.forEach((item) => {
+        if (item.getBoundingClientRect().top < innerHeight * 0.9)
+          item.classList.add("is-visible");
+      });
+    };
+    addEventListener("scroll", revealGalleryItems, { passive: true });
+    revealGalleryItems();
     item.addEventListener("click", () => openLightbox(photo));
     const image = $<HTMLImageElement>("img", item);
     image.addEventListener("error", () => {
@@ -78,7 +113,6 @@ export function initializeGallery(
       fallback.textContent = "🌸";
       image.replaceWith(fallback);
     });
-    observeReveal(item);
   });
 
   const filters = $$(".chip");

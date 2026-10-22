@@ -380,12 +380,27 @@ h3 {
   color: #fff;
 }
 .gallery {
-  columns: 2;
-  column-gap: 0.9rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+.gallery-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  min-width: 0;
+}
+.gallery .g-item.reveal {
+  opacity: 1;
+  transform: translateY(48px) scale(0.9);
+  transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+.gallery .g-item.reveal.is-visible {
+  opacity: 1;
+  transform: none;
 }
 .g-item {
-  break-inside: avoid;
-  margin-bottom: 0.9rem;
   border-radius: 20px;
   overflow: hidden;
   position: relative;
@@ -401,13 +416,6 @@ h3 {
   width: 100%;
   height: auto;
   object-fit: cover;
-  aspect-ratio: var(--ar, 1/1.2);
-}
-.g-item:nth-child(3n) img {
-  --ar: 1/1.45;
-}
-.g-item:nth-child(4n) img {
-  --ar: 1/1;
 }
 .g-item .tag {
   position: absolute;
@@ -1393,7 +1401,7 @@ html[data-photos="visible"] .price-photo {
 /* ===== Tablette / ordinateur ===== */
 @media (min-width: 760px) {
   .gallery {
-    columns: 3;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
   .cards3 {
     grid-template-columns: repeat(3, 1fr);
@@ -1467,7 +1475,7 @@ html[data-photos="visible"] .price-photo {
     display: flex;
   }
   .gallery {
-    columns: 4;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
   .hero {
     padding-top: 9rem;
@@ -1487,6 +1495,9 @@ html[data-photos="visible"] .price-photo {
   }
   .reveal {
     opacity: 1;
+    transform: none;
+  }
+  .gallery .g-item.reveal {
     transform: none;
   }
   .gated-photo,
