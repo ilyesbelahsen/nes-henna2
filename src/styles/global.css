@@ -234,6 +234,7 @@ h3 {
   position: fixed;
   top: 0;
   inset-inline: 0;
+  width: 100vw;
   z-index: 50;
   display: flex;
   align-items: center;

@@ -98,15 +98,13 @@ export function initializeGallery(
 
   const examples: Record<Level, GalleryPhoto> = {
     simple: GALLERY_PHOTOS.find(
-      (photo) =>
-        photo.src === `/assets/${encodeURIComponent("simple0 (2).jpeg")}`,
+      (photo) => photo.src === "/assets/simple-03.webp",
     )!,
     moyen: GALLERY_PHOTOS.find(
-      (photo) => photo.src === `/assets/${encodeURIComponent("moyen0.jpeg")}`,
+      (photo) => photo.src === "/assets/moyen-05.webp",
     )!,
     difficile: GALLERY_PHOTOS.find(
-      (photo) =>
-        photo.src === `/assets/${encodeURIComponent("difficile2.jpeg")}`,
+      (photo) => photo.src === "/assets/difficile-14.webp",
     )!,
   };
   $$(".price-photo").forEach((element) => {
