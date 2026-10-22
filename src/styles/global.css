@@ -57,6 +57,7 @@ main {
 }
 main #realisations {
   order: 2;
+  background: linear-gradient(180deg, #fee3e4 0, #fff 18rem, #fff 100%);
 }
 main .steps-section {
   order: 3;
@@ -282,7 +283,9 @@ h3 {
   position: relative;
   overflow: hidden;
   padding: 7rem 0 3rem;
-  background: linear-gradient(160deg, #fff 0%, #fff1e0 45%, #ffe0ea 100%);
+  background:
+    linear-gradient(rgba(255, 247, 244, 0.78), rgba(255, 231, 235, 0.84)),
+    url("/assets/fond-desktop.png") center / cover no-repeat;
 }
 .hero-inner {
   position: relative;
@@ -304,6 +307,9 @@ h3 {
   font-size: clamp(2.3rem, 9vw, 4.6rem);
   color: var(--ink);
   margin-bottom: 1rem;
+}
+.hero::before {
+  display: none;
 }
 .hero h1 em {
   font-style: normal;
@@ -1437,6 +1443,11 @@ html[data-photos="visible"] .price-photo {
   }
   .hero {
     padding-top: 6.5rem;
+    background-image:
+      linear-gradient(rgba(255, 247, 244, 0.72), rgba(255, 231, 235, 0.78)),
+      url("/assets/fond-mobile.png");
+    background-position: center top;
+    background-size: cover;
   }
   .hero h1 {
     font-size: clamp(2.1rem, 11vw, 3rem);
