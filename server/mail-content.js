@@ -73,7 +73,6 @@ export function buildBookingEmailContent(booking, when, files) {
 
   const modelCount = models.reduce((total, model) => total + model.quantity, 0);
   const fullName = `${booking.prenom} ${booking.nom}`;
-  const people = plural(booking.participants, "personne");
   const photos = files.length > 0 ? plural(files.length, "photo") : null;
   const comment = booking.commentaire?.trim() || "";
   const whatsappMessage = `Bonjour ${booking.prenom}, je vous contacte concernant votre demande de rendez-vous du ${when} à ${booking.ville}.`;

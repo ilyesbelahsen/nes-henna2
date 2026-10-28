@@ -1,3 +1,7 @@
+---
+import { SITE_CONFIG } from "../data/site";
+---
+
 <section class="final">
         <div class="container">
           <h2>Prête à sublimer vos mains ?</h2>
@@ -10,7 +14,7 @@
               >Réserver maintenant</a
             >
             <a
-              href="#"
+              href={`https://wa.me/${SITE_CONFIG.whatsapp}`}
               id="wa-direct"
               class="btn btn-outline-light btn-lg"
               target="_blank"
