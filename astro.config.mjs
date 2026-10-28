@@ -30,7 +30,6 @@ export default defineConfig({
         "@lib": `${root}src/lib`,
         "@data": `${root}src/data`,
         "@styles": `${root}src/styles`,
-        "@assets": `${root}src/assets`,
       },
     },
   },

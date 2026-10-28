@@ -1,0 +1,51 @@
+<fieldset>
+  <legend>4 · Votre modèle</legend>
+  <div class="model-choice upload-choice">
+    <h3>1. Ajouter un modèle en photo</h3>
+    <div id="photo-fields">
+      <div class="photo-row">
+        <label class="field">
+          Photo du modèle
+          <input name="photo" id="photo" type="file" accept="image/*,.heic,.heif" />
+        </label>
+        <label class="field">
+          Partie du corps
+          <select name="zone">
+            <option value="" disabled selected>Sélectionner une partie</option>
+            <option>Main (dos)</option>
+            <option>Paume</option>
+            <option>Les deux mains</option>
+            <option>Avant-bras</option>
+            <option>Pied</option>
+            <option>Autre</option>
+          </select>
+        </label>
+      </div>
+    </div>
+    <button type="button" class="btn btn-ghost btn-sm" id="add-photo">
+      Ajouter le modèle
+    </button>
+    <div id="uploaded-models" class="uploaded-models" hidden>
+      <strong>Modèles importés <span id="uploaded-count">(0)</span></strong>
+      <div id="uploaded-list" class="uploaded-list"></div>
+    </div>
+  </div>
+
+  <div class="model-choice gallery-choice">
+    <h3>2. Choisir un modèle existant</h3>
+    <p class="fine gallery-hint">
+      Parcourez la galerie pour sélectionner un motif :
+      <button type="button" class="btn-link inline" id="pick-from-gallery">
+        Voir la galerie
+      </button>
+    </p>
+    <div id="chosen-model" class="chosen" hidden>
+      <strong>Modèles choisis dans la galerie <span id="chosen-count">(0)</span></strong>
+      <div id="chosen-list" class="chosen-list"></div>
+    </div>
+  </div>
+
+  <p id="estimated-duration" class="estimated-duration" aria-live="polite">
+    Temps estimé : sélectionnez au moins un modèle.
+  </p>
+</fieldset>

@@ -1,3 +1,10 @@
+---
+import BookingAvailability from "./BookingAvailability.astro";
+import BookingContact from "./BookingContact.astro";
+import BookingModels from "./BookingModels.astro";
+import BookingParticipants from "./BookingParticipants.astro";
+---
+
 <section id="reserver" class="section tint">
         <div class="container narrow">
           <p class="eyebrow reveal">Réservation</p>
@@ -14,178 +21,10 @@
                 tabindex="-1"
                 autocomplete="off"
             /></label>
-            <fieldset>
-              <legend>1 · Ville</legend>
-              <div class="field">
-                <span>Ville</span>
-                <input id="ville" name="ville" type="hidden" required />
-                <div
-                  class="cities"
-                  id="villes"
-                  role="listbox"
-                  aria-label="Choisir une ville"
-                ></div>
-              </div>
-            </fieldset>
-
-            <fieldset>
-              <legend>2 · Vos informations</legend>
-              <div class="grid2">
-                <label class="field"
-                  >Prénom<input
-                    name="prenom"
-                    type="text"
-                    autocomplete="given-name"
-                    maxlength="80"
-                    required
-                /></label>
-                <label class="field"
-                  >Nom<input
-                    name="nom"
-                    type="text"
-                    autocomplete="family-name"
-                    maxlength="80"
-                    required
-                /></label>
-              </div>
-              <label class="field"
-                >Numéro WhatsApp<input
-                  name="telephone"
-                  type="tel"
-                  inputmode="tel"
-                  autocomplete="tel"
-                  placeholder="07XXXXXXXX"
-                  pattern="0[67][0-9]{8}"
-                  maxlength="10"
-                  required
-              /></label>
-              <label class="field"
-                >E-mail<input
-                  name="email"
-                  type="email"
-                  autocomplete="email"
-                  pattern="[^\s@]+@[^\s@]+\.[A-Za-z]{2,}"
-                  maxlength="120"
-                  required
-              /></label>
-            </fieldset>
-
-            <fieldset class="people-choice">
-              <legend>3 · Nombre de personnes</legend>
-              <label class="field" for="participants"
-                >Nombre de personnes
-                <input
-                  id="participants"
-                  name="participants"
-                  type="text"
-                  inputmode="numeric"
-                  pattern="[0-9]*"
-                  autocomplete="off"
-                  value="1"
-                  required
-                />
-              </label>
-              <p id="participants-help" class="fine">
-                Indiquez le nombre de personnes qui viendront au rendez-vous.
-              </p>
-              <p
-                id="models-requirement"
-                class="models-requirement"
-                role="alert"
-              ></p>
-            </fieldset>
-
-            <fieldset>
-              <legend>4 · Votre modèle</legend>
-              <div class="model-choice upload-choice">
-                <h3>1. Ajouter un modèle en photo</h3>
-                <div id="photo-fields">
-                  <div class="photo-row">
-                    <label class="field"
-                      >Photo du modèle
-                      <input
-                        name="photo"
-                        id="photo"
-                        type="file"
-                        accept="image/*,.heic,.heif"
-                      />
-                    </label>
-                    <label class="field"
-                      >Partie du corps{" "}
-                      <select name="zone">
-                        <option value="" disabled selected>
-                          Sélectionner une partie
-                        </option>
-                        <option>Main (dos)</option>
-                        <option>Paume</option>
-                        <option>Les deux mains</option>
-                        <option>Avant-bras</option>
-                        <option>Pied</option>
-                        <option>Autre</option>
-                      </select>
-                    </label>
-                  </div>
-                </div>
-                <button type="button" class="btn btn-ghost btn-sm" id="add-photo">
-                  Ajouter le modèle
-                </button>
-                <div id="uploaded-models" class="uploaded-models" hidden>
-                  <strong
-                    >Modèles importés{" "}
-                    <span id="uploaded-count">(0)</span></strong
-                  >
-                  <div id="uploaded-list" class="uploaded-list"></div>
-                </div>
-              </div>
-              <div class="model-choice gallery-choice">
-                <h3>2. Choisir un modèle existant</h3>
-                <p class="fine gallery-hint">
-                  Parcourez la galerie pour sélectionner un motif :{" "}
-                  <button
-                    type="button"
-                    class="btn-link inline"
-                    id="pick-from-gallery"
-                  >
-                    Voir la galerie
-                  </button>
-                </p>
-                <div id="chosen-model" class="chosen" hidden>
-                  <strong
-                    >Modèles choisis dans la galerie{" "}
-                    <span id="chosen-count">(0)</span></strong
-                  >
-                  <div id="chosen-list" class="chosen-list"></div>
-                </div>
-              </div>
-              <p id="estimated-duration" class="estimated-duration" aria-live="polite">
-                Temps estimé : sélectionnez au moins un modèle.
-              </p>
-            </fieldset>
-
-            <fieldset id="availability" hidden>
-              <legend>5 · Disponibilités</legend>
-              <div
-                class="days"
-                id="days"
-                hidden
-                role="listbox"
-                aria-label="Choisir un jour"
-              ></div>
-              <div
-                class="slots"
-                id="slots"
-                hidden
-                role="listbox"
-                aria-label="Choisir un horaire"
-              ></div>
-              <p class="place" id="place-info" aria-live="polite">
-                Complétez les étapes précédentes pour voir les jours disponibles.
-              </p>
-              <p class="fine">
-                L'adresse exacte est communiquée uniquement après validation du
-                rendez-vous.
-              </p>
-            </fieldset>
+            <BookingContact />
+            <BookingParticipants />
+            <BookingModels />
+            <BookingAvailability />
 
             <label class="field comment-choice"
               >Commentaire <span class="opt">(facultatif)</span

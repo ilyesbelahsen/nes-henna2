@@ -1,0 +1,63 @@
+<fieldset>
+  <legend>1 · Ville</legend>
+  <div class="field">
+    <span>Ville</span>
+    <input id="ville" name="ville" type="hidden" required />
+    <div
+      class="cities"
+      id="villes"
+      role="listbox"
+      aria-label="Choisir une ville"
+    ></div>
+  </div>
+</fieldset>
+
+<fieldset>
+  <legend>2 · Vos informations</legend>
+  <div class="grid2">
+    <label class="field">
+      Prénom
+      <input
+        name="prenom"
+        type="text"
+        autocomplete="given-name"
+        maxlength="80"
+        required
+      />
+    </label>
+    <label class="field">
+      Nom
+      <input
+        name="nom"
+        type="text"
+        autocomplete="family-name"
+        maxlength="80"
+        required
+      />
+    </label>
+  </div>
+  <label class="field">
+    Numéro WhatsApp
+    <input
+      name="telephone"
+      type="tel"
+      inputmode="tel"
+      autocomplete="tel"
+      placeholder="07XXXXXXXX"
+      pattern="0[67][0-9]{8}"
+      maxlength="10"
+      required
+    />
+  </label>
+  <label class="field">
+    E-mail
+    <input
+      name="email"
+      type="email"
+      autocomplete="email"
+      pattern="[^\\s@]+@[^\\s@]+\\.[A-Za-z]{2,}"
+      maxlength="120"
+      required
+    />
+  </label>
+</fieldset>
