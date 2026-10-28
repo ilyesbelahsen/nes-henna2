@@ -397,14 +397,16 @@ h3 {
   min-width: 0;
 }
 .gallery .g-item.reveal {
-  opacity: 1;
-  transform: translateY(48px) scale(0.9);
-  transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+  opacity: 0;
+  transform: translateY(72px);
+  transition:
+    opacity 0.85s ease,
+    transform 1.05s cubic-bezier(0.22, 1, 0.36, 1);
   will-change: transform;
 }
 .gallery .g-item.reveal.is-visible {
   opacity: 1;
-  transform: none;
+  transform: translateY(0);
 }
 .g-item {
   border-radius: 20px;
