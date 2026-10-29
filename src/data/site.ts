@@ -164,5 +164,5 @@ export const GALLERY_PHOTOS: readonly GalleryPhoto[] = Object.freeze([
 export const LEVEL_LABELS: Readonly<Record<Level, string>> = Object.freeze({
   simple: "Simple",
   moyen: "Moyen",
-  difficile: "chargé",
+  difficile: "Chargé",
 });
