@@ -704,7 +704,9 @@ html[data-photos="visible"] .price-photo {
   color: #fff;
   font-weight: 700;
   box-shadow: 0 0.35rem 0.8rem rgb(215 52 99 / 20%);
-  transition: transform 160ms ease, box-shadow 160ms ease;
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease;
 }
 .reviews-attribution [data-google-review-link]:hover {
   transform: translateY(-2px);

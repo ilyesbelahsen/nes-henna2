@@ -1,7 +1,10 @@
 import { readFile } from "node:fs/promises";
 import { Resend } from "resend";
 import { MAIL_FROM, OWNER_EMAIL, RESEND_API_KEY } from "./config.js";
-import { buildBookingEmailContent, escapeHtml } from "./mail-content.js";
+import {
+  buildBookingEmailContent,
+  buildCustomerBookingEmailContent,
+} from "./mail-content.js";
 
 async function sendEmail(resend, email) {
   const { data, error } = await resend.emails.send(email);
@@ -62,12 +65,12 @@ export function createMailSender(resend, { from, ownerEmail }) {
   return async function sendMails({ booking, start, files }) {
     if (!resend) return false;
     if (!from) throw new Error("MAIL_FROM doit être configurée pour Resend.");
-    const prenom = escapeHtml(booking.prenom);
-    const ville = escapeHtml(booking.ville);
-    const participants = escapeHtml(booking.participants);
-
     const when = start.setLocale("fr").toFormat("cccc d LLLL yyyy 'à' HH:mm");
-    const safeWhen = escapeHtml(when);
+    const customerContent = buildCustomerBookingEmailContent(
+      booking,
+      when,
+      files,
+    );
     const content = buildBookingEmailContent(booking, when, files);
     const galleryAttachments = await buildGalleryAttachments(booking);
     const emails = [
@@ -75,9 +78,9 @@ export function createMailSender(resend, { from, ownerEmail }) {
         from,
         to: [booking.email],
         replyTo: ownerEmail ? [ownerEmail] : undefined,
-        subject: "Demande de rendez-vous reçue",
-        text: `Bonjour ${booking.prenom},\n\nNous avons bien reçu votre demande pour le ${when} à ${booking.ville}, pour ${booking.participants} personne(s). Nes Henna vous recontactera pour confirmer le créneau.\n\nÀ bientôt.`,
-        html: `<p>Bonjour ${prenom},</p><p>Nous avons bien reçu votre demande pour le <strong>${safeWhen}</strong> à <strong>${ville}</strong>, pour <strong>${participants} personne(s)</strong>. Nes Henna vous recontactera pour confirmer le créneau.</p><p>À bientôt.</p>`,
+        subject: "Votre demande de rendez-vous · Nes Henna",
+        text: customerContent.text,
+        html: customerContent.html,
       },
     ];
 
