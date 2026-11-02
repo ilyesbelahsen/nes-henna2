@@ -2,6 +2,7 @@ const GOOGLE_PLACES_URL = "https://places.googleapis.com/v1/places";
 const DEFAULT_CACHE_TTL = 6 * 60 * 60 * 1000;
 
 let cache = null;
+let inFlightRequest = null;
 
 function parseReview(review) {
   const text = review?.text?.text;
@@ -73,26 +74,38 @@ export async function getReviews() {
   if (cache && cache.expiresAt > Date.now()) {
     return { configured: true, ...cache.value, cached: true };
   }
+  if (inFlightRequest) {
+    const value = await inFlightRequest;
+    return { configured: true, ...value, cached: true };
+  }
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 5000);
-  try {
-    const response = await fetch(
-      `${GOOGLE_PLACES_URL}/${encodeURIComponent(placeId)}?languageCode=fr`,
-      {
-        headers: {
-          "X-Goog-Api-Key": apiKey,
-          "X-Goog-FieldMask": "rating,userRatingCount,reviews,googleMapsUri",
-          "Accept-Language": "fr-FR",
+  inFlightRequest = (async () => {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    try {
+      const response = await fetch(
+        `${GOOGLE_PLACES_URL}/${encodeURIComponent(placeId)}?languageCode=fr`,
+        {
+          headers: {
+            "X-Goog-Api-Key": apiKey,
+            "X-Goog-FieldMask": "rating,userRatingCount,reviews,googleMapsUri",
+            "Accept-Language": "fr-FR",
+          },
+          signal: controller.signal,
         },
-        signal: controller.signal,
-      },
-    );
-    const body = await response.json().catch(() => null);
-    if (!response.ok) {
-      throw new Error(`Google Places HTTP ${response.status}.`);
+      );
+      const body = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error(`Google Places HTTP ${response.status}.`);
+      }
+      return parseResponse(body);
+    } finally {
+      clearTimeout(timeout);
     }
-    const value = parseResponse(body);
+  })();
+
+  try {
+    const value = await inFlightRequest;
     cache = { value, expiresAt: Date.now() + cacheTtl };
     return { configured: true, ...value, cached: false };
   } catch (error) {
@@ -105,6 +118,6 @@ export async function getReviews() {
     }
     throw error;
   } finally {
-    clearTimeout(timeout);
+    inFlightRequest = null;
   }
 }

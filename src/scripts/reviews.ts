@@ -41,15 +41,6 @@ function createReview(review: GoogleReview) {
   const caption = document.createElement("figcaption");
   caption.textContent = review.author;
   if (review.relativeDate) caption.append(` · ${review.relativeDate}`);
-  const authorUrl = validExternalUrl(review.authorUrl);
-  if (authorUrl) {
-    const link = document.createElement("a");
-    link.href = authorUrl;
-    link.target = "_blank";
-    link.rel = "noopener noreferrer";
-    link.textContent = "Voir sur Google";
-    caption.append(" · ", link);
-  }
   figure.append(stars, quote, caption);
   return figure;
 }
@@ -76,24 +67,20 @@ export async function initializeGoogleReviews() {
       userRatingCount: body.userRatingCount ?? 0,
       reviews: body.reviews ?? [],
     });
-    if (!body.configured || !body.reviews?.length) return;
-
-    track.replaceChildren(...body.reviews.map(createReview));
     const attribution = document.querySelector<HTMLElement>(
       "[data-google-reviews-attribution]",
     );
-    if (attribution) {
+    const mapsUrl = validExternalUrl(body.googleMapsUri ?? null);
+    if (attribution && body.configured && mapsUrl) {
       attribution.hidden = false;
-      const mapsUrl = validExternalUrl(body.googleMapsUri ?? null);
-      if (mapsUrl) {
-        const link = document.createElement("a");
-        link.href = mapsUrl;
-        link.target = "_blank";
-        link.rel = "noopener noreferrer";
-        link.textContent = "Avis publiés sur Google";
-        attribution.replaceChildren(link);
-      }
+      const reviewLink = attribution.querySelector<HTMLAnchorElement>(
+        "[data-google-review-link]",
+      );
+      if (reviewLink) reviewLink.href = mapsUrl;
     }
+    if (!body.configured || !body.reviews?.length) return;
+
+    track.replaceChildren(...body.reviews.map(createReview));
     window.dispatchEvent(new Event("reviews:updated"));
   } catch {
     console.warn("[Avis Google] Impossible de récupérer les avis.");

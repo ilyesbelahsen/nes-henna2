@@ -677,13 +677,38 @@ html[data-photos="visible"] .price-photo {
   color: var(--crimson);
 }
 .reviews-attribution {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
   margin: 0.5rem 0 0;
   text-align: center;
   font-size: 0.85rem;
 }
+.reviews-attribution img {
+  width: 74px;
+  height: auto;
+}
 .reviews-attribution a {
   color: var(--crimson);
   font-weight: 600;
+}
+.reviews-attribution [data-google-review-link] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.65rem 1rem;
+  border-radius: 999px;
+  background: var(--pink);
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 0.35rem 0.8rem rgb(215 52 99 / 20%);
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+.reviews-attribution [data-google-review-link]:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0.5rem 1rem rgb(215 52 99 / 28%);
 }
 /* ===== Formulaire ===== */
 .booking {
