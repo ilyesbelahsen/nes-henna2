@@ -78,11 +78,12 @@ export async function getReviews() {
   const timeout = setTimeout(() => controller.abort(), 5000);
   try {
     const response = await fetch(
-      `${GOOGLE_PLACES_URL}/${encodeURIComponent(placeId)}`,
+      `${GOOGLE_PLACES_URL}/${encodeURIComponent(placeId)}?languageCode=fr`,
       {
         headers: {
           "X-Goog-Api-Key": apiKey,
           "X-Goog-FieldMask": "rating,userRatingCount,reviews,googleMapsUri",
+          "Accept-Language": "fr-FR",
         },
         signal: controller.signal,
       },
