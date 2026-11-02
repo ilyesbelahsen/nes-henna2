@@ -23,6 +23,7 @@ import {
 } from "./calendar.js";
 import { readBooking } from "./booking.js";
 import { sendMails } from "./mailer.js";
+import { getReviews } from "./reviews.js";
 
 const app = express();
 app.set("trust proxy", 1);
@@ -55,6 +56,23 @@ const upload = multer({
 });
 
 app.get("/health", (_req, res) => res.json({ status: "ok" }));
+
+app.get(
+  "/reviews",
+  rateLimit({
+    windowMs: 60_000,
+    limit: 30,
+    message: { error: "limite_avis" },
+  }),
+  async (_req, res) => {
+    try {
+      return res.json(await getReviews());
+    } catch (error) {
+      console.error("reviews:", error.message);
+      return res.status(502).json({ error: "avis_indisponibles" });
+    }
+  },
+);
 
 app.get(
   "/days",
@@ -172,4 +190,11 @@ app.use((error, _req, res, _next) => {
 
 app.listen(Number(PORT), () => {
   console.log(`Serveur démarré sur le port ${PORT}`);
+  console.log(
+    `Avis Google : ${
+      process.env.GOOGLE_PLACES_API_KEY && process.env.GOOGLE_PLACE_ID
+        ? "configurés"
+        : "non configurés"
+    }`,
+  );
 });

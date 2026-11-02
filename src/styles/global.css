@@ -676,6 +676,15 @@ html[data-photos="visible"] .price-photo {
   font-weight: 600;
   color: var(--crimson);
 }
+.reviews-attribution {
+  margin: 0.5rem 0 0;
+  text-align: center;
+  font-size: 0.85rem;
+}
+.reviews-attribution a {
+  color: var(--crimson);
+  font-weight: 600;
+}
 /* ===== Formulaire ===== */
 .booking {
   background: #fff;

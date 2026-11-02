@@ -21,6 +21,7 @@ export default defineConfig({
         "/days": bookingServer,
         "/slots": bookingServer,
         "/book": bookingServer,
+        "/reviews": bookingServer,
       },
     },
     resolve: {

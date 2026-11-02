@@ -72,14 +72,19 @@ function initializeReviewsMarquee() {
     track.append(clone);
   });
 
-  EmblaCarousel(viewport, { align: "start", dragFree: true, loop: true }, [
-    AutoScroll({
-      active: !matchMedia("(prefers-reduced-motion: reduce)").matches,
-      speed: 1,
-      startDelay: 0,
-      stopOnInteraction: false,
-    }),
-  ]);
+  const carousel = EmblaCarousel(
+    viewport,
+    { align: "start", dragFree: true, loop: true },
+    [
+      AutoScroll({
+        active: !matchMedia("(prefers-reduced-motion: reduce)").matches,
+        speed: 1,
+        startDelay: 0,
+        stopOnInteraction: false,
+      }),
+    ],
+  );
+  addEventListener("reviews:updated", () => carousel.reInit());
 }
 
 const TEXTES = {
