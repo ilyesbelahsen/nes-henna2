@@ -59,6 +59,12 @@ export const GALLERY_PHOTOS: readonly GalleryPhoto[] = Object.freeze([
   buildLocalPhoto("simple-03.webp", "simple", "Motif de henné naturel simple"),
   buildLocalPhoto("simple-04.webp", "simple", "Motif de henné naturel simple"),
   buildLocalPhoto("simple-05.webp", "simple", "Motif de henné naturel simple"),
+  buildLocalPhoto("tarifsimple.webp", "simple", "Motif de henné naturel simple"),
+  buildLocalPhoto(
+    "tarifmoyen.webp",
+    "moyen",
+    "Motif de henné naturel de niveau moyen",
+  ),
   buildLocalPhoto(
     "moyen-01.webp",
     "moyen",
@@ -88,6 +94,11 @@ export const GALLERY_PHOTOS: readonly GalleryPhoto[] = Object.freeze([
     "moyen-06.webp",
     "moyen",
     "Motif de henné naturel de niveau moyen",
+  ),
+  buildLocalPhoto(
+    "tarifcharge.webp",
+    "difficile",
+    "Motif de henné naturel chargé",
   ),
   buildLocalPhoto(
     "difficile-01.webp",

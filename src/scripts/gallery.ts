@@ -132,13 +132,13 @@ export function initializeGallery(
 
   const examples: Record<Level, GalleryPhoto> = {
     simple: GALLERY_PHOTOS.find(
-      (photo) => photo.src === "/assets/simple-03.webp",
+      (photo) => photo.src === "/assets/tarifsimple.webp",
     )!,
     moyen: GALLERY_PHOTOS.find(
-      (photo) => photo.src === "/assets/moyen-05.webp",
+      (photo) => photo.src === "/assets/tarifmoyen.webp",
     )!,
     difficile: GALLERY_PHOTOS.find(
-      (photo) => photo.src === "/assets/difficile-14.webp",
+      (photo) => photo.src === "/assets/tarifcharge.webp",
     )!,
   };
   $$(".price-photo").forEach((element) => {
